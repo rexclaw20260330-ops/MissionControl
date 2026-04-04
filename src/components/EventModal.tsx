@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CalendarEvent } from '@/lib/supabase';
 import { X } from 'lucide-react';
 
@@ -60,6 +60,25 @@ export function EventModal({
     return now.toISOString().slice(0, 16);
   });
   const [color, setColor] = useState(event?.color || '#0066ff');
+
+  // Reset form when event changes
+  useEffect(() => {
+    if (event) {
+      setTitle(event.title || '');
+      setDescription(event.description || '');
+      setStartTime(new Date(event.start_time).toISOString().slice(0, 16));
+      setEndTime(new Date(event.end_time).toISOString().slice(0, 16));
+      setColor(event.color || '#0066ff');
+    } else if (initialDate) {
+      setTitle('');
+      setDescription('');
+      setStartTime(initialDate.toISOString().slice(0, 16));
+      const end = new Date(initialDate);
+      end.setHours(end.getHours() + 1);
+      setEndTime(end.toISOString().slice(0, 16));
+      setColor('#0066ff');
+    }
+  }, [event, initialDate]);
 
   if (!isOpen) return null;
 

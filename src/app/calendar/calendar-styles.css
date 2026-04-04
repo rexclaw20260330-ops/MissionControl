@@ -174,43 +174,50 @@
   border-collapse: collapse;
 }
 .rbc-agenda-table thead th {
-  background: linear-gradient(180deg, #16161f 0%, #0f0f14 100%);
+  background: linear-gradient(180deg, #1a1a24 0%, #0f0f14 100%);
   border-bottom: 2px solid #0066ff;
   color: #00ffff;
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  padding: 16px;
+  letter-spacing: 1px;
+  padding: 12px;
   text-align: left;
   font-weight: 600;
 }
 .rbc-agenda-table tbody tr {
-  border-bottom: 1px solid #1e1e2a;
+  border-bottom: 1px solid #2a2a3a;
 }
 .rbc-agenda-table tbody tr:nth-child(even) {
-  background: rgba(22, 22, 31, 0.5);
+  background: rgba(26, 26, 36, 0.7);
+}
+.rbc-agenda-table tbody tr:nth-child(odd) {
+  background: rgba(20, 20, 28, 0.5);
 }
 .rbc-agenda-table tbody tr:hover {
-  background: rgba(0, 102, 255, 0.08);
+  background: rgba(0, 102, 255, 0.12);
 }
 .rbc-agenda-event-cell,
 .rbc-agenda-date-cell,
 .rbc-agenda-time-cell {
-  padding: 14px 16px;
-  color: #f0f0f5;
+  padding: 10px 12px;
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.5;
 }
 .rbc-agenda-date-cell {
-  color: #0066ff;
+  color: #00ffff;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', monospace;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
 }
 .rbc-agenda-time-cell {
-  color: #8a8a95;
-  font-size: 13px;
+  color: #a0a0b0;
+  font-size: 12px;
 }
 .rbc-agenda-event-cell {
-  color: #f0f0f5;
+  color: #ffffff;
+  font-weight: 500;
 }
 
 /* ========== Toolbar ========== */
