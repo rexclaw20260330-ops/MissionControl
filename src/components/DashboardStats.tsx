@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Clock, Calendar, FileText, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { CheckCircle2, Clock, Calendar, FileText, TrendingUp, TrendingDown, Minus, RefreshCw } from "lucide-react";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 interface Stat {
   name: string;
@@ -12,45 +13,6 @@ interface Stat {
   gradient: string;
   glowColor: string;
 }
-
-const stats: Stat[] = [
-  { 
-    name: "Tasks Completed", 
-    value: 12, 
-    change: "+3 today", 
-    trend: "up",
-    icon: CheckCircle2, 
-    gradient: "from-emerald-500 to-emerald-400",
-    glowColor: "rgba(16, 185, 129, 0.3)"
-  },
-  { 
-    name: "In Progress", 
-    value: 5, 
-    change: "2 active", 
-    trend: "neutral",
-    icon: Clock, 
-    gradient: "from-[#0066ff] to-[#00ffff]",
-    glowColor: "rgba(0, 102, 255, 0.3)"
-  },
-  { 
-    name: "Scheduled", 
-    value: 8, 
-    change: "+2 this week", 
-    trend: "up",
-    icon: Calendar, 
-    gradient: "from-violet-500 to-violet-400",
-    glowColor: "rgba(139, 92, 246, 0.3)"
-  },
-  { 
-    name: "Documents", 
-    value: 24, 
-    change: "+5 created", 
-    trend: "up",
-    icon: FileText, 
-    gradient: "from-amber-500 to-amber-400",
-    glowColor: "rgba(245, 158, 11, 0.3)"
-  },
-];
 
 // Animated counter hook
 function useCountUp(end: number, duration: number = 1500) {
@@ -136,11 +98,61 @@ function StatCard({ stat }: { stat: Stat }) {
 }
 
 export function DashboardStats() {
+  const { data, loading, refetch } = useDashboardData(30000); // 每30秒自動更新
+
+  const stats: Stat[] = [
+    { 
+      name: "Tasks Completed", 
+      value: data.stats.tasksCompleted || 0, 
+      change: "+3 today", 
+      trend: "up",
+      icon: CheckCircle2, 
+      gradient: "from-emerald-500 to-emerald-400",
+      glowColor: "rgba(16, 185, 129, 0.3)"
+    },
+    { 
+      name: "In Progress", 
+      value: data.stats.inProgress || 0, 
+      change: "2 active", 
+      trend: "neutral",
+      icon: Clock, 
+      gradient: "from-[#0066ff] to-[#00ffff]",
+      glowColor: "rgba(0, 102, 255, 0.3)"
+    },
+    { 
+      name: "Scheduled", 
+      value: data.stats.scheduled || 0, 
+      change: "+2 this week", 
+      trend: "up",
+      icon: Calendar, 
+      gradient: "from-violet-500 to-violet-400",
+      glowColor: "rgba(139, 92, 246, 0.3)"
+    },
+    { 
+      name: "Documents", 
+      value: data.stats.documents || 0, 
+      change: "+5 created", 
+      trend: "up",
+      icon: FileText, 
+      gradient: "from-amber-500 to-amber-400",
+      glowColor: "rgba(245, 158, 11, 0.3)"
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((stat) => (
-        <StatCard key={stat.name} stat={stat} />
-      ))}
+    <div className="relative">
+      <button 
+        onClick={refetch}
+        className="absolute -top-2 right-0 p-2 text-[#8a8a95] hover:text-[#00ffff] transition-colors"
+        title="手動刷新"
+      >
+        <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+      </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <StatCard key={stat.name} stat={stat} />
+        ))}
+      </div>
     </div>
   );
 }

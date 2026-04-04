@@ -1,0 +1,25 @@
+{
+  "tasks": [
+    { "id": 1, "title": "Review Mission Control UI", "status": "completed", "priority": "high", "createdAt": "2026-04-04T10:00:00Z" },
+    { "id": 2, "title": "Deploy to Vercel", "status": "completed", "priority": "high", "createdAt": "2026-04-04T11:00:00Z" },
+    { "id": 3, "title": "Add data persistence", "status": "in_progress", "priority": "medium", "createdAt": "2026-04-04T12:00:00Z" },
+    { "id": 4, "title": "Sync with OpenClaw Gateway", "status": "pending", "priority": "low", "createdAt": "2026-04-04T13:00:00Z" }
+  ],
+  "projects": [
+    { "id": 1, "name": "Mission Control", "status": "active", "progress": 75 },
+    { "id": 2, "name": "Tricera Integration", "status": "on_hold", "progress": 30 },
+    { "id": 3, "name": "OpenClaw Automation", "status": "planning", "progress": 10 }
+  ],
+  "stats": {
+    "tasksCompleted": 12,
+    "inProgress": 5,
+    "scheduled": 8,
+    "documents": 24
+  },
+  "activities": [
+    { "id": 1, "action": "Deployed Mission Control", "timestamp": "2026-04-04T19:00:00Z", "type": "deployment" },
+    { "id": 2, "action": "Updated Office page design", "timestamp": "2026-04-04T18:00:00Z", "type": "update" },
+    { "id": 3, "action": "Added energy system for dinos", "timestamp": "2026-04-04T17:30:00Z", "type": "feature" }
+  ],
+  "lastUpdated": "2026-04-04T19:31:00Z"
+}
