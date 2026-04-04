@@ -10,6 +10,7 @@ import {
   Users,
   Building2,
 } from "lucide-react";
+import { RestartButton } from "@/components/RestartButton";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -61,7 +62,11 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-[#0066ff]/20">
+      <div className="p-4 border-t border-[#0066ff]/20 space-y-4">
+        {/* Server Restart Control */}
+        <RestartButton />
+        
+        {/* AI Agent Status */}
         <div className="bg-gradient-to-br from-[#0066ff]/10 to-[#00ffff]/10 rounded-xl p-4 border border-[#0066ff]/30">
           <p className="text-xs text-[#8a8a95] mb-2">AI Agent Status</p>
           <div className="flex items-center gap-2">
