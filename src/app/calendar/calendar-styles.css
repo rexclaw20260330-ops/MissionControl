@@ -22,9 +22,9 @@
   border-bottom: 1px solid rgba(0, 102, 255, 0.2);
   color: #00ffff;
   font-weight: 600;
-  padding: 12px;
+  padding: 10px 8px;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   letter-spacing: 0.05em;
 }
 
@@ -55,8 +55,8 @@
 /* ========== Date Cells ========== */
 .rbc-date-cell {
   color: #8a8a95;
-  padding: 8px;
-  font-size: 0.875rem;
+  padding: 6px;
+  font-size: 0.8rem;
 }
 .rbc-date-cell.rbc-now {
   color: #00ffff;
@@ -105,8 +105,8 @@
 
 /* ========== Events ========== */
 .rbc-event {
-  font-size: 0.75rem;
-  padding: 4px 8px;
+  font-size: 0.7rem;
+  padding: 3px 6px;
   font-weight: 500;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
@@ -148,8 +148,9 @@
   background: #0f0f14;
   border-right: 1px solid #252535;
   color: #8a8a95;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
+  padding: 4px;
 }
 .rbc-time-content > .rbc-day-slot:not(:last-child) {
   border-right: 1px solid rgba(30, 30, 42, 0.4);
@@ -214,22 +215,24 @@
 
 /* ========== Toolbar ========== */
 .rbc-toolbar {
-  padding: 16px 24px;
+  padding: 12px 16px;
   border-bottom: 1px solid rgba(0, 102, 255, 0.2);
+  gap: 8px;
 }
 .rbc-toolbar-label {
   color: #f0f0f5;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
 }
 .rbc-btn-group button {
   background: rgba(0, 102, 255, 0.1);
   border: 1px solid rgba(0, 102, 255, 0.3);
   color: #8a8a95;
-  padding: 8px 16px;
-  border-radius: 8px;
-  margin: 0 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin: 0 2px;
   transition: all 0.2s;
+  font-size: 0.75rem;
 }
 .rbc-btn-group button:hover {
   background: rgba(0, 102, 255, 0.2);
@@ -245,11 +248,23 @@
 .rbc-show-more {
   background: transparent;
   color: #00ffff;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 500;
+  padding: 2px 4px;
 }
 .rbc-row-segment {
-  padding: 2px 4px;
+  padding: 1px 2px;
+}
+
+/* ========== More breathing room ========== */
+.rbc-time-content {
+  border-top: 1px solid rgba(0, 102, 255, 0.2);
+}
+.rbc-timeslot-group {
+  min-height: 48px;
+}
+.rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid rgba(30, 30, 42, 0.4);
 }
 .rbc-row-content {
   z-index: 1;

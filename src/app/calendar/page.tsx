@@ -175,6 +175,8 @@ export default function CalendarPage() {
           popup
           views={['month', 'week', 'day', 'agenda']}
           defaultView="month"
+          timeslots={1}
+          step={60}
           tooltipAccessor={(event) => event.resource?.description || event.title}
         />
       </div>
