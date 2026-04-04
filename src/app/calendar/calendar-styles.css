@@ -1,0 +1,256 @@
+/* Mission Control Calendar - Space Theme Styles */
+
+/* ========== Grid Pattern Background ========== */
+.rbc-calendar {
+  background-color: #0f0f14;
+  background-image: 
+    linear-gradient(rgba(0, 102, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 102, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(rgba(0, 102, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 102, 255, 0.06) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+  background-position: center center;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 102, 255, 0.2);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ========== Header ========== */
+.rbc-header {
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), transparent);
+  border-bottom: 1px solid rgba(0, 102, 255, 0.2);
+  color: #00ffff;
+  font-weight: 600;
+  padding: 12px;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+/* ========== Month View ========== */
+.rbc-month-view {
+  border: none;
+}
+.rbc-month-row {
+  border-bottom: 1px solid rgba(30, 30, 42, 0.5);
+}
+.rbc-month-row:last-child {
+  border-bottom: none;
+}
+.rbc-day-bg {
+  background: transparent;
+  border-right: 1px solid rgba(30, 30, 42, 0.3);
+}
+.rbc-day-bg:last-child {
+  border-right: none;
+}
+.rbc-day-bg:hover {
+  background: rgba(0, 102, 255, 0.05);
+}
+.rbc-today {
+  background: rgba(0, 102, 255, 0.1) !important;
+}
+
+/* ========== Date Cells ========== */
+.rbc-date-cell {
+  color: #8a8a95;
+  padding: 8px;
+  font-size: 0.875rem;
+}
+.rbc-date-cell.rbc-now {
+  color: #00ffff;
+  font-weight: 600;
+}
+.rbc-off-range-bg {
+  background: #0a0a0e;
+}
+.rbc-off-range {
+  color: #3a3a45;
+}
+.rbc-off-range:hover {
+  background: #0d0d12;
+}
+.rbc-current {
+  color: #00ffff;
+}
+
+/* ========== Selected Cell ========== */
+.rbc-day-bg.rbc-selected-cell {
+  background: rgba(0, 102, 255, 0.15) !important;
+  box-shadow: inset 0 0 0 1px #0066ff66;
+  animation: selectPulse 0.4s ease-out;
+  position: relative;
+}
+.rbc-day-bg.rbc-selected-cell::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: #00ffff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #00ffff;
+}
+.rbc-day-bg.rbc-today.rbc-selected-cell {
+  background: rgba(0, 255, 255, 0.12) !important;
+  box-shadow: inset 0 0 0 1px #00ffff66, inset 0 0 20px rgba(0, 255, 255, 0.05);
+}
+@keyframes selectPulse {
+  0% { background: rgba(0, 102, 255, 0.3); }
+  100% { background: rgba(0, 102, 255, 0.15); }
+}
+
+/* ========== Events ========== */
+.rbc-event {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  font-weight: 500;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+.rbc-event:hover {
+  box-shadow: 
+    0 0 0 1px #00ffff33,
+    0 0 20px rgba(0, 255, 255, 0.15),
+    0 0 40px rgba(0, 255, 255, 0.08);
+  transform: translateY(-1px);
+  border-color: #00ffff33;
+  z-index: 10;
+}
+.rbc-event-content {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rbc-button-link {
+  color: inherit;
+}
+
+/* ========== Time Grid ========== */
+.rbc-time-view {
+  background: transparent;
+}
+.rbc-time-content {
+  background: transparent;
+}
+.rbc-time-slot {
+  background: #16161f;
+  border-bottom: 1px solid rgba(30, 30, 42, 0.6);
+}
+.rbc-time-slot:nth-child(even) {
+  background: #1a1a24;
+}
+.rbc-time-header-gutter,
+.rbc-time-gutter {
+  background: #0f0f14;
+  border-right: 1px solid #252535;
+  color: #8a8a95;
+  font-size: 11px;
+  font-weight: 500;
+}
+.rbc-time-content > .rbc-day-slot:not(:last-child) {
+  border-right: 1px solid rgba(30, 30, 42, 0.4);
+}
+.rbc-current-time-indicator {
+  background: linear-gradient(90deg, transparent, #00ffff, transparent);
+  height: 2px;
+  box-shadow: 0 0 8px #00ffff, 0 0 16px #00ffff66;
+}
+.rbc-timeslot-group {
+  border-bottom: 1px solid rgba(30, 30, 42, 0.6);
+}
+
+/* ========== Agenda View ========== */
+.rbc-agenda-view {
+  background: transparent;
+  border-radius: 8px;
+}
+.rbc-agenda-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.rbc-agenda-table thead th {
+  background: linear-gradient(180deg, #16161f 0%, #0f0f14 100%);
+  border-bottom: 2px solid #0066ff;
+  color: #00ffff;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+}
+.rbc-agenda-table tbody tr {
+  border-bottom: 1px solid #1e1e2a;
+}
+.rbc-agenda-table tbody tr:nth-child(even) {
+  background: rgba(22, 22, 31, 0.5);
+}
+.rbc-agenda-table tbody tr:hover {
+  background: rgba(0, 102, 255, 0.08);
+}
+.rbc-agenda-event-cell,
+.rbc-agenda-date-cell,
+.rbc-agenda-time-cell {
+  padding: 14px 16px;
+  color: #f0f0f5;
+}
+.rbc-agenda-date-cell {
+  color: #0066ff;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', monospace;
+}
+.rbc-agenda-time-cell {
+  color: #8a8a95;
+  font-size: 13px;
+}
+.rbc-agenda-event-cell {
+  color: #f0f0f5;
+}
+
+/* ========== Toolbar ========== */
+.rbc-toolbar {
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 102, 255, 0.2);
+}
+.rbc-toolbar-label {
+  color: #f0f0f5;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.rbc-btn-group button {
+  background: rgba(0, 102, 255, 0.1);
+  border: 1px solid rgba(0, 102, 255, 0.3);
+  color: #8a8a95;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin: 0 4px;
+  transition: all 0.2s;
+}
+.rbc-btn-group button:hover {
+  background: rgba(0, 102, 255, 0.2);
+  color: #f0f0f5;
+}
+.rbc-btn-group button.rbc-active {
+  background: linear-gradient(135deg, #0066ff, #00ffff);
+  color: white;
+  border-color: transparent;
+}
+
+/* ========== Misc ========== */
+.rbc-show-more {
+  background: transparent;
+  color: #00ffff;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.rbc-row-segment {
+  padding: 2px 4px;
+}
+.rbc-row-content {
+  z-index: 1;
+}

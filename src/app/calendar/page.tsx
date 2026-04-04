@@ -10,6 +10,7 @@ import { CalendarEvent } from '@/lib/supabase';
 
 // Import react-big-calendar CSS
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import './calendar-styles.css';
 
 const locales = {
   'en-US': enUS,
@@ -118,7 +119,7 @@ export default function CalendarPage() {
         borderRadius: '6px',
         border: 'none',
         boxShadow: `0 2px 8px ${color}40`,
-      },
+      } as React.CSSProperties,
     };
   };
 
@@ -131,155 +132,51 @@ export default function CalendarPage() {
   }
 
   return (
-    <>
-      {/* Custom styles for react-big-calendar to match space theme */}
-      <style jsx global>{`
-        .rbc-calendar {
-          background: #0f0f14;
-          border-radius: 16px;
-          border: 1px solid rgba(0, 102, 255, 0.2);
-          overflow: hidden;
-        }
-        .rbc-header {
-          background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), transparent);
-          border-bottom: 1px solid rgba(0, 102, 255, 0.2);
-          color: #00ffff;
-          font-weight: 600;
-          padding: 12px;
-          text-transform: uppercase;
-          font-size: 0.75rem;
-          letter-spacing: 0.05em;
-        }
-        .rbc-month-view {
-          border: none;
-        }
-        .rbc-month-row {
-          border-bottom: 1px solid rgba(0, 102, 255, 0.1);
-        }
-        .rbc-day-bg {
-          background: #0f0f14;
-        }
-        .rbc-day-bg:hover {
-          background: rgba(0, 102, 255, 0.05);
-        }
-        .rbc-today {
-          background: rgba(0, 102, 255, 0.1) !important;
-        }
-        .rbc-date-cell {
-          color: #8a8a95;
-          padding: 8px;
-          font-size: 0.875rem;
-        }
-        .rbc-date-cell.rbc-now {
-          color: #00ffff;
-          font-weight: 600;
-        }
-        .rbc-off-range-bg {
-          background: rgba(0, 0, 0, 0.2);
-        }
-        .rbc-off-range {
-          color: rgba(138, 138, 149, 0.4);
-        }
-        .rbc-current {
-          color: #00ffff;
-        }
-        .rbc-event {
-          font-size: 0.75rem;
-          padding: 4px 8px;
-          font-weight: 500;
-        }
-        .rbc-event-content {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .rbc-button-link {
-          color: inherit;
-        }
-        .rbc-toolbar {
-          padding: 16px 24px;
-          border-bottom: 1px solid rgba(0, 102, 255, 0.2);
-        }
-        .rbc-toolbar-label {
-          color: #f0f0f5;
-          font-size: 1.25rem;
-          font-weight: 700;
-        }
-        .rbc-btn-group button {
-          background: rgba(0, 102, 255, 0.1);
-          border: 1px solid rgba(0, 102, 255, 0.3);
-          color: #8a8a95;
-          padding: 8px 16px;
-          border-radius: 8px;
-          margin: 0 4px;
-          transition: all 0.2s;
-        }
-        .rbc-btn-group button:hover {
-          background: rgba(0, 102, 255, 0.2);
-          color: #f0f0f5;
-        }
-        .rbc-btn-group button.rbc-active {
-          background: linear-gradient(135deg, #0066ff, #00ffff);
-          color: white;
-          border-color: transparent;
-        }
-        .rbc-show-more {
-          background: transparent;
-          color: #00ffff;
-          font-size: 0.75rem;
-          font-weight: 500;
-        }
-        .rbc-row-segment {
-          padding: 2px 4px;
-        }
-      `}</style>
-
-      <div className="p-6 h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#0066ff] to-[#00ffff] rounded-xl flex items-center justify-center shadow-lg shadow-[#0066ff]/30">
-              <CalendarDays className="text-white" size={24} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-white tracking-tight">
-                Mission Calendar
-              </h1>
-              <p className="text-sm text-[#8a8a95]">
-                Schedule and track your events
-              </p>
-            </div>
+    <div className="p-6 h-full flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-[#0066ff] to-[#00ffff] rounded-xl flex items-center justify-center shadow-lg shadow-[#0066ff]/30">
+            <CalendarDays className="text-white" size={24} />
           </div>
-          <button
-            onClick={() => {
-              setSelectedEvent(null);
-              setSelectedDate(new Date());
-              setIsModalOpen(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#0066ff] to-[#00ffff] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg shadow-[#0066ff]/30"
-          >
-            <Plus size={18} />
-            New Event
-          </button>
+          <div>
+            <h1 className="text-2xl font-black text-white tracking-tight">
+              Mission Calendar
+            </h1>
+            <p className="text-sm text-[#8a8a95]">
+              Schedule and track your events
+            </p>
+          </div>
         </div>
+        <button
+          onClick={() => {
+            setSelectedEvent(null);
+            setSelectedDate(new Date());
+            setIsModalOpen(true);
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#0066ff] to-[#00ffff] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg shadow-[#0066ff]/30"
+        >
+          <Plus size={18} />
+          New Event
+        </button>
+      </div>
 
-        {/* Calendar */}
-        <div className="flex-1 min-h-0">
-          <Calendar
-            localizer={localizer}
-            events={calendarEvents}
-            startAccessor="start"
-            endAccessor="end"
-            onSelectSlot={handleSelectSlot}
-            onSelectEvent={handleSelectEvent}
-            selectable
-            eventPropGetter={eventStyleGetter}
-            popup
-            views={['month', 'week', 'day', 'agenda']}
-            defaultView="month"
-            tooltipAccessor={(event) => event.resource?.description || event.title}
-          />
-        </div>
+      {/* Calendar */}
+      <div className="flex-1 min-h-0">
+        <Calendar
+          localizer={localizer}
+          events={calendarEvents}
+          startAccessor="start"
+          endAccessor="end"
+          onSelectSlot={handleSelectSlot}
+          onSelectEvent={handleSelectEvent}
+          selectable
+          eventPropGetter={eventStyleGetter}
+          popup
+          views={['month', 'week', 'day', 'agenda']}
+          defaultView="month"
+          tooltipAccessor={(event) => event.resource?.description || event.title}
+        />
       </div>
 
       <EventModal
@@ -293,6 +190,6 @@ export default function CalendarPage() {
         event={selectedEvent}
         initialDate={selectedDate}
       />
-    </>
+    </div>
   );
 }
