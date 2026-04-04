@@ -1,144 +1,298 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Clock, Repeat, Plus } from "lucide-react";
+import { useState, useEffect, useCallback } from 'react';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay, addHours } from 'date-fns';
+import { enUS } from 'date-fns/locale';
+import { Plus, CalendarDays } from 'lucide-react';
+import { EventModal } from '@/components/EventModal';
+import { CalendarEvent } from '@/lib/supabase';
 
-interface ScheduledTask {
-  id: string;
-  title: string;
-  time: string;
-  type: "cron" | "one-time";
-  recurrence?: string;
-}
+// Import react-big-calendar CSS
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-const scheduledTasks: ScheduledTask[] = [];
+const locales = {
+  'en-US': enUS,
+};
 
-const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  locales,
+});
 
-export default function Calendar() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+export default function CalendarPage() {
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const monthName = currentDate.toLocaleString("default", { month: "long", year: "numeric" });
+  const fetchEvents = useCallback(async () => {
+    try {
+      const response = await fetch('/api/calendar/events');
+      if (!response.ok) throw new Error('Failed to fetch events');
+      const data = await response.json();
+      setEvents(data.events || []);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const getDaysInMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  const calendarEvents = events.map((event) => ({
+    id: event.id,
+    title: event.title,
+    start: new Date(event.start_time),
+    end: new Date(event.end_time),
+    resource: event,
+  }));
+
+  const handleSelectSlot = ({ start }: { start: Date }) => {
+    setSelectedEvent(null);
+    setSelectedDate(start);
+    setIsModalOpen(true);
   };
 
-  const getFirstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  const handleSelectEvent = (calEvent: { id: string; resource: CalendarEvent }) => {
+    setSelectedEvent(calEvent.resource);
+    setIsModalOpen(true);
   };
 
-  const daysInMonth = getDaysInMonth(currentDate);
-  const firstDay = getFirstDayOfMonth(currentDate);
-  const today = new Date().getDate();
-  const isCurrentMonth = currentDate.getMonth() === new Date().getMonth();
+  const handleSaveEvent = async (eventData: Partial<CalendarEvent>) => {
+    try {
+      if (selectedEvent) {
+        // Update existing event
+        const response = await fetch(`/api/calendar/events/${selectedEvent.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(eventData),
+        });
+        if (!response.ok) throw new Error('Failed to update event');
+      } else {
+        // Create new event
+        const response = await fetch('/api/calendar/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(eventData),
+        });
+        if (!response.ok) throw new Error('Failed to create event');
+      }
+      await fetchEvents();
+      setIsModalOpen(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      console.error('Error saving event:', error);
+      alert('Failed to save event. Please try again.');
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
+    try {
+      const response = await fetch(`/api/calendar/events/${selectedEvent.id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete event');
+      await fetchEvents();
+      setIsModalOpen(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      alert('Failed to delete event. Please try again.');
+    }
+  };
+
+  const eventStyleGetter = (event: { resource: CalendarEvent }) => {
+    const color = event.resource.color || '#0066ff';
+    return {
+      style: {
+        backgroundColor: color,
+        borderRadius: '6px',
+        border: 'none',
+        boxShadow: `0 2px 8px ${color}40`,
+      },
+    };
+  };
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066ff]" />
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8">
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Calendar</h1>
-          <p className="text-gray-400">View all scheduled tasks and cron jobs.</p>
-        </div>
-        <button className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-          <Plus size={18} />
-          New Schedule
-        </button>
-      </header>
+    <>
+      {/* Custom styles for react-big-calendar to match space theme */}
+      <style jsx global>{`
+        .rbc-calendar {
+          background: #0f0f14;
+          border-radius: 16px;
+          border: 1px solid rgba(0, 102, 255, 0.2);
+          overflow: hidden;
+        }
+        .rbc-header {
+          background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), transparent);
+          border-bottom: 1px solid rgba(0, 102, 255, 0.2);
+          color: #00ffff;
+          font-weight: 600;
+          padding: 12px;
+          text-transform: uppercase;
+          font-size: 0.75rem;
+          letter-spacing: 0.05em;
+        }
+        .rbc-month-view {
+          border: none;
+        }
+        .rbc-month-row {
+          border-bottom: 1px solid rgba(0, 102, 255, 0.1);
+        }
+        .rbc-day-bg {
+          background: #0f0f14;
+        }
+        .rbc-day-bg:hover {
+          background: rgba(0, 102, 255, 0.05);
+        }
+        .rbc-today {
+          background: rgba(0, 102, 255, 0.1) !important;
+        }
+        .rbc-date-cell {
+          color: #8a8a95;
+          padding: 8px;
+          font-size: 0.875rem;
+        }
+        .rbc-date-cell.rbc-now {
+          color: #00ffff;
+          font-weight: 600;
+        }
+        .rbc-off-range-bg {
+          background: rgba(0, 0, 0, 0.2);
+        }
+        .rbc-off-range {
+          color: rgba(138, 138, 149, 0.4);
+        }
+        .rbc-current {
+          color: #00ffff;
+        }
+        .rbc-event {
+          font-size: 0.75rem;
+          padding: 4px 8px;
+          font-weight: 500;
+        }
+        .rbc-event-content {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .rbc-button-link {
+          color: inherit;
+        }
+        .rbc-toolbar {
+          padding: 16px 24px;
+          border-bottom: 1px solid rgba(0, 102, 255, 0.2);
+        }
+        .rbc-toolbar-label {
+          color: #f0f0f5;
+          font-size: 1.25rem;
+          font-weight: 700;
+        }
+        .rbc-btn-group button {
+          background: rgba(0, 102, 255, 0.1);
+          border: 1px solid rgba(0, 102, 255, 0.3);
+          color: #8a8a95;
+          padding: 8px 16px;
+          border-radius: 8px;
+          margin: 0 4px;
+          transition: all 0.2s;
+        }
+        .rbc-btn-group button:hover {
+          background: rgba(0, 102, 255, 0.2);
+          color: #f0f0f5;
+        }
+        .rbc-btn-group button.rbc-active {
+          background: linear-gradient(135deg, #0066ff, #00ffff);
+          color: white;
+          border-color: transparent;
+        }
+        .rbc-show-more {
+          background: transparent;
+          color: #00ffff;
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+        .rbc-row-segment {
+          padding: 2px 4px;
+        }
+      `}</style>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="p-6 h-full flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#0066ff] to-[#00ffff] rounded-xl flex items-center justify-center shadow-lg shadow-[#0066ff]/30">
+              <CalendarDays className="text-white" size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-white tracking-tight">
+                Mission Calendar
+              </h1>
+              <p className="text-sm text-[#8a8a95]">
+                Schedule and track your events
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setSelectedEvent(null);
+              setSelectedDate(new Date());
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#0066ff] to-[#00ffff] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg shadow-[#0066ff]/30"
+          >
+            <Plus size={18} />
+            New Event
+          </button>
+        </div>
+
         {/* Calendar */}
-        <div className="lg:col-span-2 bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">{monthName}</h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                <ChevronLeft size={20} className="text-gray-400" />
-              </button>
-              <button
-                onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                <ChevronRight size={20} className="text-gray-400" />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1">
-            {weekDays.map((day) => (
-              <div key={day} className="text-center text-xs text-gray-500 font-medium py-2">
-                {day}
-              </div>
-            ))}
-            
-            {Array.from({ length: firstDay }).map((_, i) => (
-              <div key={`empty-${i}`} />
-            ))}
-            
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1;
-              const isToday = isCurrentMonth && day === today;
-              return (
-                <div
-                  key={day}
-                  className={`aspect-square flex items-center justify-center rounded-lg text-sm cursor-pointer transition-colors ${
-                    isToday
-                      ? "bg-indigo-500 text-white font-semibold"
-                      : "hover:bg-gray-800 text-gray-300"
-                  }`}
-                >
-                  {day}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Scheduled Tasks */}
-        <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Clock size={20} className="text-indigo-400" />
-            <h2 className="text-lg font-semibold text-white">Scheduled Tasks</h2>
-          </div>
-
-          {scheduledTasks.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No scheduled tasks</p>
-              <p className="text-sm text-gray-600 mt-1">Ask Rex to schedule tasks for you.</p>
-              <button className="mt-4 inline-flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                <Plus size={16} />
-                Schedule Task
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {scheduledTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="flex items-start gap-3 p-3 bg-[#252525] rounded-lg border border-gray-700 hover:border-gray-600 transition-colors"
-                >
-                  <div className={`w-2 h-2 rounded-full mt-2 ${task.type === "cron" ? "bg-green-500" : "bg-blue-500"}`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-white">{task.title}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-gray-500">{task.time}</span>
-                      {task.recurrence && (
-                        <span className="flex items-center gap-1 text-xs text-green-400">
-                          <Repeat size={10} />
-                          {task.recurrence}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="flex-1 min-h-0">
+          <Calendar
+            localizer={localizer}
+            events={calendarEvents}
+            startAccessor="start"
+            endAccessor="end"
+            onSelectSlot={handleSelectSlot}
+            onSelectEvent={handleSelectEvent}
+            selectable
+            eventPropGetter={eventStyleGetter}
+            popup
+            views={['month', 'week', 'day', 'agenda']}
+            defaultView="month"
+            tooltipAccessor={(event) => event.resource?.description || event.title}
+          />
         </div>
       </div>
-    </div>
+
+      <EventModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedEvent(null);
+        }}
+        onSave={handleSaveEvent}
+        onDelete={selectedEvent ? handleDeleteEvent : undefined}
+        event={selectedEvent}
+        initialDate={selectedDate}
+      />
+    </>
   );
 }
