@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 export async function GET() {
   try {
     const { data: events, error } = await supabase
-      .from('calendar_events')
+      .from('events')
       .select('*')
       .order('start_time', { ascending: true });
 
@@ -23,7 +23,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, start_time, end_time, color } = body;
+    const { title, description, start_time, end_time, color, category } = body;
 
     if (!title || !start_time || !end_time) {
       return NextResponse.json(
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: event, error } = await supabase
-      .from('calendar_events')
+      .from('events')
       .insert([
         {
           title,
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
           start_time,
           end_time,
           color: color || '#0066ff',
+          category: category || '其他',
         },
       ])
       .select()

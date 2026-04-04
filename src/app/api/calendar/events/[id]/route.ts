@@ -8,7 +8,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, description, start_time, end_time, color } = body;
+    const { title, description, start_time, end_time, color, category } = body;
 
     if (!title || !start_time || !end_time) {
       return NextResponse.json(
@@ -18,13 +18,14 @@ export async function PUT(
     }
 
     const { data: event, error } = await supabase
-      .from('calendar_events')
+      .from('events')
       .update({
         title,
         description,
         start_time,
         end_time,
         color,
+        category,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -51,7 +52,7 @@ export async function DELETE(
     const { id } = await params;
 
     const { error } = await supabase
-      .from('calendar_events')
+      .from('events')
       .delete()
       .eq('id', id);
 
