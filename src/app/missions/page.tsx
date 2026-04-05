@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Target, Users, ChevronRight, X, Rocket, Code, Palette, Search, Brain } from "lucide-react";
+import { getMissions, createMission, Mission } from "@/lib/db-actions";
 
 type AgentId = "rex" | "mosa" | "bronto" | "tricera" | "pteroda";
 
