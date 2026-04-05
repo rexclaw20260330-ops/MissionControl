@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mission Control",
+  title: "DinoSquad HQ",
   description: "Next-gen AI mission control dashboard",
 };
 

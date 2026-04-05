@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 export async function GET() {
   try {
     const { data: events, error } = await supabase
-      .from('events')
+      .from('calendar_events')
       .select('*')
       .order('start_time', { ascending: true });
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: event, error } = await supabase
-      .from('events')
+      .from('calendar_events')
       .insert([
         {
           title,

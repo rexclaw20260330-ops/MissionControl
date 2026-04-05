@@ -18,7 +18,7 @@ import { RestartButton } from "@/components/RestartButton";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Missionboard", href: "/missions", icon: Target },
+  { name: "Missions", href: "/missions", icon: Target },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "Team", href: "/team", icon: Users },
@@ -42,17 +42,17 @@ export function Sidebar() {
           {!isCollapsed && (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-[#0066ff] to-[#00ffff] rounded-xl flex items-center justify-center shadow-lg shadow-[#0066ff]/30">
-                <span className="text-white font-black text-lg tracking-tighter">MC</span>
+                <span className="text-white font-black text-lg tracking-tighter">DS</span>
               </div>
               <div>
-                <h1 className="text-lg font-black text-white tracking-tighter">Mission Control</h1>
-                <p className="text-[10px] text-[#00ffff]/70 font-mono tracking-widest uppercase">AI-Powered</p>
+                <h1 className="text-lg font-black text-white tracking-tighter">DinoSquad</h1>
+                <p className="text-[10px] text-[#00ffff]/70 font-mono tracking-widest uppercase">HQ</p>
               </div>
             </div>
           )}
           {isCollapsed && (
             <div className="w-8 h-8 bg-gradient-to-br from-[#0066ff] to-[#00ffff] rounded-lg flex items-center justify-center shadow-lg shadow-[#0066ff]/30 mx-auto">
-              <span className="text-white font-black text-xs">MC</span>
+              <span className="text-white font-black text-xs">DS</span>
             </div>
           )}
           <button

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, addHours } from 'date-fns';
+import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { Plus, CalendarDays } from 'lucide-react';
+import { Plus, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { EventModal } from '@/components/EventModal';
 import { CalendarEvent } from '@/lib/supabase';
 
@@ -24,12 +24,68 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+// Custom Toolbar Component
+interface ToolbarProps {
+  date: Date;
+  label: string;
+  onNavigate: (action: 'PREV' | 'NEXT' | 'TODAY' | 'DATE', date?: Date) => void;
+  onView: (view: View) => void;
+  view: View;
+}
+
+const CustomToolbar = ({ date, label, onNavigate, onView, view }: ToolbarProps) => {
+  return (
+    <div className="flex items-center justify-between mb-4 p-3 bg-[#161B22] rounded-xl border border-white/10">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onNavigate('TODAY')}
+          className="px-3 py-1.5 text-sm font-medium bg-[#0066ff]/20 text-[#00ffff] rounded-lg hover:bg-[#0066ff]/30 transition-colors"
+        >
+          Today
+        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onNavigate('PREV')}
+            className="p-1.5 text-[#8a8a95] hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={() => onNavigate('NEXT')}
+            className="p-1.5 text-[#8a8a95] hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+        <span className="ml-3 text-lg font-bold text-white">{label}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        {(['month', 'week', 'day', 'agenda'] as View[]).map((v) => (
+          <button
+            key={v}
+            onClick={() => onView(v)}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors capitalize ${
+              view === v
+                ? 'bg-gradient-to-r from-[#0066ff] to-[#00ffff] text-white'
+                : 'text-[#8a8a95] hover:text-white hover:bg-white/10'
+            }`}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [currentView, setCurrentView] = useState<View>('month');
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -70,7 +126,6 @@ export default function CalendarPage() {
   const handleSaveEvent = async (eventData: Partial<CalendarEvent>) => {
     try {
       if (selectedEvent) {
-        // Update existing event
         const response = await fetch(`/api/calendar/events/${selectedEvent.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -78,7 +133,6 @@ export default function CalendarPage() {
         });
         if (!response.ok) throw new Error('Failed to update event');
       } else {
-        // Create new event
         const response = await fetch('/api/calendar/events', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -141,7 +195,7 @@ export default function CalendarPage() {
           </div>
           <div>
             <h1 className="text-2xl font-black text-white tracking-tight">
-              Mission Calendar
+              Dino Calendar
             </h1>
             <p className="text-sm text-[#8a8a95]">
               Schedule and track your events
@@ -173,11 +227,18 @@ export default function CalendarPage() {
           selectable
           eventPropGetter={eventStyleGetter}
           popup
+          view={currentView}
+          date={currentDate}
+          onView={setCurrentView}
+          onNavigate={setCurrentDate}
           views={['month', 'week', 'day', 'agenda']}
           defaultView="month"
           timeslots={1}
           step={60}
           tooltipAccessor={(event) => event.resource?.description || event.title}
+          components={{
+            toolbar: CustomToolbar,
+          }}
         />
       </div>
 

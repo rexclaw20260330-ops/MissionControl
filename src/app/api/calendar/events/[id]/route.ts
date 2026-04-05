@@ -18,7 +18,7 @@ export async function PUT(
     }
 
     const { data: event, error } = await supabase
-      .from('events')
+      .from('calendar_events')
       .update({
         title,
         description,
@@ -52,7 +52,7 @@ export async function DELETE(
     const { id } = await params;
 
     const { error } = await supabase
-      .from('events')
+      .from('calendar_events')
       .delete()
       .eq('id', id);
 

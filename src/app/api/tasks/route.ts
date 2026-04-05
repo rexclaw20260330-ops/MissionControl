@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getProjects, createProject, updateProject, deleteProject } from '@/lib/supabaseClient';
+import { getTasks, createTask, updateTask, deleteTask } from '@/lib/supabaseClient';
 
-// GET /api/projects - 取得所有專案
+// GET /api/tasks - 取得所有任務
 export async function GET() {
   try {
-    const projects = await getProjects();
-    return NextResponse.json({ success: true, projects });
+    const tasks = await getTasks();
+    return NextResponse.json({ success: true, tasks });
   } catch (error) {
-    console.error('Error fetching projects:', error);
+    console.error('Error fetching tasks:', error);
     return NextResponse.json(
       { success: false, error: String(error) },
       { status: 500 }
@@ -15,20 +15,21 @@ export async function GET() {
   }
 }
 
-// POST /api/projects - 建立新專案
+// POST /api/tasks - 建立新任務
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const project = await createProject({
-      name: body.name,
+    const task = await createTask({
+      title: body.title,
       description: body.description,
-      status: body.status || 'planning',
-      progress: body.progress || 0,
-      color: body.color || '#3b82f6'
+      status: body.status || 'pending',
+      priority: body.priority || 'medium',
+      due_date: body.dueDate,
+      project_id: body.projectId
     });
-    return NextResponse.json({ success: true, project });
+    return NextResponse.json({ success: true, task });
   } catch (error) {
-    console.error('Error creating project:', error);
+    console.error('Error creating task:', error);
     return NextResponse.json(
       { success: false, error: String(error) },
       { status: 500 }
@@ -36,23 +37,24 @@ export async function POST(request: Request) {
   }
 }
 
-// PUT /api/projects - 更新專案
+// PUT /api/tasks - 更新任務
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { id, ...updates } = body;
     
     const mappedUpdates: any = {};
-    if (updates.name !== undefined) mappedUpdates.name = updates.name;
+    if (updates.title !== undefined) mappedUpdates.title = updates.title;
     if (updates.description !== undefined) mappedUpdates.description = updates.description;
     if (updates.status !== undefined) mappedUpdates.status = updates.status;
-    if (updates.progress !== undefined) mappedUpdates.progress = updates.progress;
-    if (updates.color !== undefined) mappedUpdates.color = updates.color;
+    if (updates.priority !== undefined) mappedUpdates.priority = updates.priority;
+    if (updates.dueDate !== undefined) mappedUpdates.due_date = updates.dueDate;
+    if (updates.projectId !== undefined) mappedUpdates.project_id = updates.projectId;
     
-    const project = await updateProject(id, mappedUpdates);
-    return NextResponse.json({ success: true, project });
+    const task = await updateTask(id, mappedUpdates);
+    return NextResponse.json({ success: true, task });
   } catch (error) {
-    console.error('Error updating project:', error);
+    console.error('Error updating task:', error);
     return NextResponse.json(
       { success: false, error: String(error) },
       { status: 500 }
@@ -60,7 +62,7 @@ export async function PUT(request: Request) {
   }
 }
 
-// DELETE /api/projects - 刪除專案
+// DELETE /api/tasks - 刪除任務
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -68,15 +70,15 @@ export async function DELETE(request: Request) {
     
     if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Missing project ID' },
+        { success: false, error: 'Missing task ID' },
         { status: 400 }
       );
     }
     
-    await deleteProject(id);
+    await deleteTask(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting project:', error);
+    console.error('Error deleting task:', error);
     return NextResponse.json(
       { success: false, error: String(error) },
       { status: 500 }

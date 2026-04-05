@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Target, Users, ChevronRight, X, Rocket, Code, Palette, Search, Brain, Plus, Loader2, AlertCircle, Trash2 } from "lucide-react";
-import { getMissions, createMission, updateMissionProgress, deleteMission, Mission } from "@/lib/db-actions";
+import { getMissions, createMission, updateMissionProgress, deleteMission, Mission, MissionInsert } from "@/lib/db-actions";
 
 type AgentId = "rex" | "mosa" | "bronto" | "tricera" | "pteroda";
 
@@ -105,16 +105,16 @@ const missionToProject = (mission: Mission): Project => {
 };
 
 // Convert UI Project to database MissionInsert
-const projectToMissionInsert = (project: Omit<Project, "id" | "createdAt">): Omit<Mission, "id" | "created_at"> => {
+const projectToMissionInsert = (project: Omit<Project, "id" | "createdAt">): MissionInsert => {
   return {
     name: project.name,
-    description: project.description || null,
+    description: project.description || undefined,
     responsible_agent: project.responsibleAgent,
     participating_agents: project.participatingAgents,
     status: project.status,
     progress: project.progress,
     priority: project.priority,
-    deadline: project.deadline || null,
+    deadline: project.deadline || undefined,
   };
 };
 

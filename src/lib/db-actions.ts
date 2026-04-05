@@ -1,5 +1,8 @@
 import { supabase } from './supabase';
-import { Mission, MissionInsert, MissionUpdate, AgentSchedule, AgentScheduleInsert, UserGoal, UserGoalInsert, UserSkill, UserSkillInsert } from './supabase-types';
+import { Mission, MissionInsert, MissionUpdate, MissionStatus, AgentSchedule, AgentScheduleInsert, UserGoal, UserGoalInsert, UserSkill, UserSkillInsert } from './supabase-types';
+
+// Re-export types for components
+export type { Mission, MissionInsert, MissionUpdate, MissionStatus, AgentSchedule, AgentScheduleInsert, UserGoal, UserGoalInsert, UserSkill, UserSkillInsert };
 
 // Missions
 export async function getMissions() {
@@ -61,7 +64,7 @@ export async function updateMissionProgress(id: string, progress: number) {
   return updateMission(id, { progress });
 }
 
-export async function updateMissionStatus(id: string, status: string) {
+export async function updateMissionStatus(id: string, status: MissionStatus) {
   return updateMission(id, { status });
 }
 
