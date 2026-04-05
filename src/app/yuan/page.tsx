@@ -5,15 +5,16 @@ import { Calendar, Target, Zap, Trophy, Crown, Activity, TrendingUp, Star, Plus,
 import { getUserGoals, createGoal, updateGoalProgress, UserGoal, getUserSkills, createSkill, updateSkillLevel, UserSkill, getUserStats, UserStat } from "@/lib/db-actions";
 
 const formatStatValue = (stat: UserStat | undefined, suffix: string = '') => {
-  if (!stat) return '—';
+  if (!stat) return 'Loading...';
   const value = stat.stat_value;
   if (value >= 1000) return `${(value / 1000).toFixed(1)}K${suffix}`;
   return `${value}${suffix}`;
 };
 
 const formatStatChange = (stat: UserStat | undefined) => {
-  if (!stat) return '—';
+  if (!stat) return '';
   const change = stat.stat_change;
+  if (change === 0) return '';
   if (change > 0) return `+${change}`;
   return `${change}`;
 };
