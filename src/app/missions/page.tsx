@@ -84,9 +84,9 @@ const agents: Record<AgentId, Agent> = {
   },
 };
 
-// Default agent assignments for new missions
+// Default agent assignments - can be configured
 const getDefaultAgent = (): AgentId => "rex";
-const getDefaultTeam = (): AgentId[] => ["mosa"];
+const getDefaultTeam = (): AgentId[] => [];
 
 // Convert database Mission to UI Project
 const missionToProject = (mission: Mission): Project => {
@@ -143,8 +143,8 @@ function CreateMissionModal({ isOpen, onClose, onSubmit }: CreateMissionModalPro
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    responsibleAgent: "rex" as AgentId,
-    participatingAgents: ["mosa"] as AgentId[],
+    responsibleAgent: getDefaultAgent(),
+    participatingAgents: [] as AgentId[],
     status: "planning" as "planning" | "active" | "completed" | "on-hold",
     progress: 0,
     priority: "medium" as "low" | "medium" | "high" | "critical",

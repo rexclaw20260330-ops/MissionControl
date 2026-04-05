@@ -5,10 +5,10 @@ import { Calendar, Target, Zap, Trophy, Crown, Activity, TrendingUp, Star, Plus,
 import { getUserGoals, createGoal, updateGoalProgress, UserGoal, getUserSkills, createSkill, updateSkillLevel, UserSkill } from "@/lib/db-actions";
 
 const stats = [
-  { label: "Tasks Completed", value: "247", change: "+12", icon: Zap },
-  { label: "Projects Active", value: "5", change: "+1", icon: Target },
-  { label: "Agent Hours", value: "1.2K", change: "+89", icon: Activity },
-  { label: "Win Rate", value: "94%", change: "+3%", icon: Trophy },
+  { label: "Tasks Completed", value: "—", change: "—", icon: Zap },
+  { label: "Projects Active", value: "—", change: "—", icon: Target },
+  { label: "Agent Hours", value: "—", change: "—", icon: Activity },
+  { label: "Win Rate", value: "—", change: "—", icon: Trophy },
 ];
 
 // Generate days for mini calendar
@@ -19,7 +19,7 @@ const generateCalendarDays = () => {
     days.push({
       day: i,
       isToday: i === today,
-      hasEvent: [5, 12, 15, 18, 22, 25, 28].includes(i),
+      hasEvent: false, // Will be populated from real events in the future
     });
   }
   return days;
