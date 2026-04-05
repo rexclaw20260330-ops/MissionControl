@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   ArrowLeft, Brain, Sparkles, Lightbulb, BookOpen, 
   Link2, Search, Plus, Trash2, Edit3, Save, X,
-  ChevronRight, ChevronDown, Hash, Clock, Star,
+  ChevronRight, Hash, Clock, Star,
   Network, FileText, Zap, Command, Filter
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -16,17 +16,13 @@ interface BrainNode {
   title: string;
   content: string;
   tags: string[];
-  connections: string[]; // IDs of connected nodes
+  connections: string[];
   createdAt: string;
   updatedAt: string;
   isPinned?: boolean;
 }
 
-interface BrainGraph {
-  nodes: BrainNode[];
-}
-
-// Mock data - will be replaced with Supabase later
+// Mock data
 const mockNodes: BrainNode[] = [
   {
     id: '1',
@@ -82,12 +78,13 @@ const mockNodes: BrainNode[] = [
   },
 ];
 
-const typeColors: Record<BrainNode['type'], { bg: string; border: string; icon: any }> = {
-  note: { bg: 'bg-blue-500/10', border: 'border-blue-500/30', icon: FileText },
-  idea: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', icon: Lightbulb },
-  resource: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', icon: BookOpen },
-  project: { bg: 'bg-purple-500/10', border: 'border-purple-500/30', icon: Sparkles },
-  goal: { bg: 'bg-rose-500/10', border: 'border-rose-500/30', icon: Star },
+// GOLD/AMBER Theme Colors
+const typeColors: Record<BrainNode['type'], { bg: string; border: string; icon: any; glow: string }> = {
+  note: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', icon: FileText, glow: '#f59e0b' },
+  idea: { bg: 'bg-yellow-400/10', border: 'border-yellow-400/30', icon: Lightbulb, glow: '#facc15' },
+  resource: { bg: 'bg-orange-500/10', border: 'border-orange-500/30', icon: BookOpen, glow: '#f97316' },
+  project: { bg: 'bg-amber-600/10', border: 'border-amber-600/30', icon: Sparkles, glow: '#d97706' },
+  goal: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', icon: Star, glow: '#eab308' },
 };
 
 // Canvas Graph Visualization
@@ -103,7 +100,6 @@ const GraphCanvas = ({ nodes, onSelectNode }: { nodes: BrainNode[]; onSelectNode
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
     const resize = () => {
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
@@ -111,7 +107,6 @@ const GraphCanvas = ({ nodes, onSelectNode }: { nodes: BrainNode[]; onSelectNode
     resize();
     window.addEventListener('resize', resize);
 
-    // Calculate node positions (force-directed simulation simplified)
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const radius = Math.min(canvas.width, canvas.height) * 0.35;
@@ -127,7 +122,7 @@ const GraphCanvas = ({ nodes, onSelectNode }: { nodes: BrainNode[]; onSelectNode
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Draw connections
-      ctx.strokeStyle = 'rgba(0, 102, 255, 0.15)';
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.15)';
       ctx.lineWidth = 1;
       nodes.forEach((node) => {
         const pos = nodePositions.current.get(node.id);
@@ -151,35 +146,24 @@ const GraphCanvas = ({ nodes, onSelectNode }: { nodes: BrainNode[]; onSelectNode
 
         const isHovered = hoveredNode === node.id;
         const isPinned = node.isPinned;
-
-        // Glow effect
-        const gradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, isHovered ? 40 : 30);
-        const colorMap: Record<string, string> = {
-          note: '#3b82f6',
-          idea: '#f59e0b',
-          resource: '#10b981',
-          project: '#8b5cf6',
-          goal: '#f43f5e',
-        };
-        const color = colorMap[node.type] || '#0066ff';
+        const color = typeColors[node.type].glow;
         
-        gradient.addColorStop(0, `${color}40`);
+        const gradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, isHovered ? 40 : 30);
+        gradient.addColorStop(0, `${color}60`);
         gradient.addColorStop(1, 'transparent');
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, isHovered ? 40 : 30, 0, Math.PI * 2);
         ctx.fill();
 
-        // Node circle
-        ctx.fillStyle = isHovered ? `${color}80` : `${color}40`;
-        ctx.strokeStyle = isHovered ? color : `${color}80`;
+        ctx.fillStyle = isHovered ? `${color}90` : `${color}50`;
+        ctx.strokeStyle = isHovered ? color : `${color}90`;
         ctx.lineWidth = isHovered ? 3 : 2;
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, isPinned ? 25 : 20, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        // Pin indicator
         if (isPinned) {
           ctx.fillStyle = '#FFD700';
           ctx.beginPath();
@@ -187,13 +171,11 @@ const GraphCanvas = ({ nodes, onSelectNode }: { nodes: BrainNode[]; onSelectNode
           ctx.fill();
         }
 
-        // Node title
         ctx.fillStyle = '#ffffff';
         ctx.font = isHovered ? 'bold 13px sans-serif' : '12px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Wrap text
         const maxWidth = 120;
         const words = node.title.split(' ');
         let line = '';
@@ -216,7 +198,6 @@ const GraphCanvas = ({ nodes, onSelectNode }: { nodes: BrainNode[]; onSelectNode
 
     draw();
 
-    // Handle mouse interactions
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -241,7 +222,7 @@ const GraphCanvas = ({ nodes, onSelectNode }: { nodes: BrainNode[]; onSelectNode
       }
     };
 
-    const handleClick = (e: MouseEvent) => {
+    const handleClick = () => {
       if (hoveredNode) {
         const node = nodes.find((n) => n.id === hoveredNode);
         if (node) onSelectNode(node);
@@ -276,7 +257,6 @@ export default function SecondBrain() {
   const [isCreating, setIsCreating] = useState(false);
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
 
-  // Filter nodes
   const filteredNodes = nodes.filter((node) => {
     const matchesSearch = 
       node.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -286,12 +266,10 @@ export default function SecondBrain() {
     return matchesSearch && matchesFilter;
   });
 
-  // Get connected nodes for selected node
   const connectedNodes = selectedNode
     ? nodes.filter((n) => selectedNode.connections.includes(n.id))
     : [];
 
-  // Stats
   const stats = {
     total: nodes.length,
     pinned: nodes.filter((n) => n.isPinned).length,
@@ -305,20 +283,20 @@ export default function SecondBrain() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-[#f0f0f5] overflow-hidden">
-      {/* Top Bar - Minimal with Return Button */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-[#0066ff]/20">
+    <div className="min-h-screen bg-[#0D1117] text-[#f0f0f5] overflow-hidden">
+      {/* Top Bar - GOLD Theme */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0D1117]/90 backdrop-blur-xl border-b border-[#FFD700]/20">
         <div className="flex items-center justify-between px-6 py-4">
-          {/* Return Button */}
+          {/* Return Button - GOLD */}
           <button
             onClick={() => router.push('/yuan')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#0066ff]/20 to-[#00ffff]/20 border border-[#0066ff]/30 hover:border-[#00ffff]/50 hover:from-[#0066ff]/30 hover:to-[#00ffff]/30 transition-all duration-300 group"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#FFD700]/20 to-[#FFA500]/20 border border-[#FFD700]/40 hover:border-[#FFD700]/60 hover:from-[#FFD700]/30 hover:to-[#FFA500]/30 transition-all duration-300 group"
           >
-            <ArrowLeft size={18} className="text-[#00ffff] group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium text-[#00ffff]">Return to Yuan&apos;s Sanctum</span>
+            <ArrowLeft size={18} className="text-[#FFD700] group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium text-[#FFD700]">Return to Yuan&apos;s Sanctum</span>
           </button>
 
-          {/* Title & Stats */}
+          {/* Title & Stats - GOLD */}
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-[#FFD700] to-[#FFA500] rounded-xl flex items-center justify-center shadow-lg shadow-[#FFD700]/30">
@@ -334,13 +312,12 @@ export default function SecondBrain() {
               </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-[#16161f] border border-white/5">
+            <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-[#161B22] border border-[#FFD700]/20">
               {Object.entries(stats.byType).map(([type, count]) => {
                 const Icon = typeColors[type as BrainNode['type']].icon;
                 return (
                   <div key={type} className="flex items-center gap-1.5 text-xs">
-                    <Icon size={12} className="text-[#8a8a95]" />
+                    <Icon size={12} className="text-[#FFD700]" />
                     <span className="text-[#8a8a95]">{count}</span>
                   </div>
                 );
@@ -348,15 +325,15 @@ export default function SecondBrain() {
             </div>
           </div>
 
-          {/* Search */}
+          {/* Search - GOLD border */}
           <div className="relative w-80">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a8a95]" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#FFD700]" />
             <input
               type="text"
               placeholder="Search your thoughts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-[#16161f] border border-white/10 rounded-xl text-sm text-white placeholder:text-[#8a8a95] focus:border-[#0066ff]/50 focus:outline-none transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#161B22] border border-[#FFD700]/20 rounded-xl text-sm text-white placeholder:text-[#8a8a95] focus:border-[#FFD700]/50 focus:outline-none transition-colors"
             />
           </div>
         </div>
@@ -364,15 +341,14 @@ export default function SecondBrain() {
 
       {/* Main Content */}
       <main className="pt-20 h-screen flex">
-        {/* Left Panel - Filters & Quick Actions */}
-        <aside className="w-64 border-r border-[#0066ff]/20 bg-[#0f0f14]/50 p-4 flex flex-col">
-          {/* View Toggle */}
-          <div className="flex items-center gap-2 mb-6 p-1 bg-[#16161f] rounded-xl">
+        {/* Left Panel - GOLD accents */}
+        <aside className="w-64 border-r border-[#FFD700]/20 bg-[#0D1117]/50 p-4 flex flex-col">
+          <div className="flex items-center gap-2 mb-6 p-1 bg-[#161B22] rounded-xl">
             <button
               onClick={() => setViewMode('graph')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
                 viewMode === 'graph'
-                  ? 'bg-gradient-to-r from-[#0066ff] to-[#00ffff] text-white'
+                  ? 'bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black'
                   : 'text-[#8a8a95] hover:text-white'
               }`}
             >
@@ -383,7 +359,7 @@ export default function SecondBrain() {
               onClick={() => setViewMode('list')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
                 viewMode === 'list'
-                  ? 'bg-gradient-to-r from-[#0066ff] to-[#00ffff] text-white'
+                  ? 'bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black'
                   : 'text-[#8a8a95] hover:text-white'
               }`}
             >
@@ -392,9 +368,8 @@ export default function SecondBrain() {
             </button>
           </div>
 
-          {/* Filters */}
           <div className="mb-6">
-            <h3 className="text-xs font-bold text-[#8a8a95] uppercase tracking-wider mb-3 px-2">
+            <h3 className="text-xs font-bold text-[#FFD700] uppercase tracking-wider mb-3 px-2">
               Filter by Type
             </h3>
             <div className="space-y-1">
@@ -402,7 +377,7 @@ export default function SecondBrain() {
                 onClick={() => setActiveFilter('all')}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all ${
                   activeFilter === 'all'
-                    ? 'bg-[#0066ff]/20 text-[#00ffff] border border-[#0066ff]/30'
+                    ? 'bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/40'
                     : 'text-[#8a8a95] hover:text-white hover:bg-white/5'
                 }`}
               >
@@ -433,9 +408,8 @@ export default function SecondBrain() {
             </div>
           </div>
 
-          {/* Pinned Nodes */}
           <div className="flex-1">
-            <h3 className="text-xs font-bold text-[#8a8a95] uppercase tracking-wider mb-3 px-2">
+            <h3 className="text-xs font-bold text-[#FFD700] uppercase tracking-wider mb-3 px-2">
               Pinned Thoughts
             </h3>
             <div className="space-y-2">
@@ -447,7 +421,7 @@ export default function SecondBrain() {
                     <button
                       key={node.id}
                       onClick={() => setSelectedNode(node)}
-                      className="w-full text-left p-3 rounded-xl bg-[#16161f] border border-[#FFD700]/20 hover:border-[#FFD700]/50 transition-all group"
+                      className="w-full text-left p-3 rounded-xl bg-[#161B22] border border-[#FFD700]/30 hover:border-[#FFD700]/50 transition-all group"
                     >
                       <div className="flex items-start gap-2">
                         <Icon size={14} className="text-[#FFD700] mt-0.5" />
@@ -466,10 +440,9 @@ export default function SecondBrain() {
             </div>
           </div>
 
-          {/* Create Button */}
           <button
             onClick={() => setIsCreating(true)}
-            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#0066ff] to-[#00ffff] rounded-xl font-semibold text-white hover:brightness-110 transition-all shadow-lg shadow-[#0066ff]/30"
+            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-xl font-semibold text-black hover:brightness-110 transition-all shadow-lg shadow-[#FFD700]/30"
           >
             <Plus size={18} />
             New Thought
@@ -482,13 +455,15 @@ export default function SecondBrain() {
             <div className="absolute inset-0">
               <GraphCanvas nodes={filteredNodes} onSelectNode={setSelectedNode} />
               
-              {/* Graph Legend */}
-              <div className="absolute bottom-4 left-4 p-4 rounded-xl bg-[#16161f]/90 backdrop-blur border border-white/10">
-                <p className="text-xs font-bold text-[#8a8a95] mb-2">Node Types</p>
+              <div className="absolute bottom-4 left-4 p-4 rounded-xl bg-[#161B22]/90 backdrop-blur border border-[#FFD700]/20">
+                <p className="text-xs font-bold text-[#FFD700] mb-2">Node Types</p>
                 <div className="space-y-1">
-                  {Object.entries(typeColors).map(([type, { icon: Icon, border }]) => (
+                  {Object.entries(typeColors).map(([type, { glow }]) => (
                     <div key={type} className="flex items-center gap-2 text-xs">
-                      <div className={`w-3 h-3 rounded-full ${border.replace('border', 'bg').replace('/30', '/60')}`} />
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: glow, boxShadow: `0 0 8px ${glow}` }}
+                      />
                       <span className="text-[#8a8a95] capitalize">{type}</span>
                     </div>
                   ))}
@@ -515,7 +490,7 @@ export default function SecondBrain() {
                           <Star size={14} className="text-[#FFD700] fill-[#FFD700]" />
                         )}
                       </div>
-                      <h3 className="font-bold text-white mb-2 group-hover:text-[#00ffff] transition-colors">
+                      <h3 className="font-bold text-white mb-2 group-hover:text-[#FFD700] transition-colors">
                         {node.title}
                       </h3>
                       <p className="text-sm text-[#8a8a95] line-clamp-2 mb-3">
@@ -525,7 +500,7 @@ export default function SecondBrain() {
                         {node.tags.map((tag) => (
                           <span
                             key={tag}
-                            className="px-2 py-0.5 text-[10px] rounded-full bg-white/10 text-[#8a8a95]"
+                            className="px-2 py-0.5 text-[10px] rounded-full bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/20"
                           >
                             #{tag}
                           </span>
@@ -549,9 +524,9 @@ export default function SecondBrain() {
           )}
         </section>
 
-        {/* Right Panel - Node Detail */}
+        {/* Right Panel - GOLD accents */}
         {selectedNode && (
-          <aside className="w-96 border-l border-[#0066ff]/20 bg-[#0f0f14]/80 backdrop-blur p-6 overflow-y-auto">
+          <aside className="w-96 border-l border-[#FFD700]/20 bg-[#0D1117]/80 backdrop-blur p-6 overflow-y-auto">
             <div className="flex items-start justify-between mb-6">
               <div className={`p-3 rounded-xl ${typeColors[selectedNode.type].bg}`}>
                 {(() => {
@@ -579,7 +554,7 @@ export default function SecondBrain() {
               {selectedNode.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="px-3 py-1 text-xs rounded-full bg-[#0066ff]/20 text-[#00ffff] border border-[#0066ff]/30"
+                  className="px-3 py-1 text-xs rounded-full bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/30"
                 >
                   #{tag}
                 </span>
@@ -593,7 +568,7 @@ export default function SecondBrain() {
             </div>
 
             <div className="mb-6">
-              <h3 className="text-xs font-bold text-[#8a8a95] uppercase tracking-wider mb-3 flex items-center gap-2">
+              <h3 className="text-xs font-bold text-[#FFD700] uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Link2 size={14} />
                 Connected Nodes ({connectedNodes.length})
               </h3>
@@ -604,11 +579,11 @@ export default function SecondBrain() {
                     <button
                       key={node.id}
                       onClick={() => setSelectedNode(node)}
-                      className="w-full text-left p-3 rounded-xl bg-[#16161f] border border-white/5 hover:border-[#0066ff]/30 transition-all group"
+                      className="w-full text-left p-3 rounded-xl bg-[#161B22] border border-white/5 hover:border-[#FFD700]/30 transition-all group"
                     >
                       <div className="flex items-center gap-3">
                         <Icon size={14} className="text-[#8a8a95]" />
-                        <span className="text-sm text-white group-hover:text-[#00ffff] transition-colors">
+                        <span className="text-sm text-white group-hover:text-[#FFD700] transition-colors">
                           {node.title}
                         </span>
                         <ChevronRight size={14} className="ml-auto text-[#8a8a95]" />
@@ -629,13 +604,13 @@ export default function SecondBrain() {
         )}
       </main>
 
-      {/* Create Modal */}
+      {/* Create Modal - GOLD */}
       {isCreating && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="w-full max-w-2xl bg-[#16161f] border border-[#0066ff]/30 rounded-2xl p-6">
+          <div className="w-full max-w-2xl bg-[#161B22] border border-[#FFD700]/30 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-white flex items-center gap-2">
-                <Sparkles size={20} className="text-[#00ffff]" />
+                <Sparkles size={20} className="text-[#FFD700]" />
                 Capture New Thought
               </h2>
               <button
@@ -645,12 +620,9 @@ export default function SecondBrain() {
                 <X size={20} />
               </button>
             </div>
-            
-            {/* Form would go here */}
             <p className="text-[#8a8a95] mb-6">
               Form coming soon... This is your space to capture ideas, notes, resources, and connect them into a knowledge network.
             </p>
-            
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setIsCreating(false)}
@@ -660,7 +632,7 @@ export default function SecondBrain() {
               </button>
               <button
                 onClick={() => setIsCreating(false)}
-                className="px-6 py-2 bg-gradient-to-r from-[#0066ff] to-[#00ffff] rounded-xl font-semibold text-white hover:brightness-110 transition-all"
+                className="px-6 py-2 bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-xl font-semibold text-black hover:brightness-110 transition-all"
               >
                 Save Thought
               </button>
