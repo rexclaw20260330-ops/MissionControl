@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Calendar, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Clock, Plus, X, Loader2 } from "lucide-react";
+import { getAgentSchedules, createSchedule, deleteSchedule } from "@/lib/db-actions";
+import { AgentSchedule, ScheduleType } from "@/lib/supabase-types";
 
 type AgentId = "rex" | "mosa" | "bronto" | "tricera" | "pteroda";
 
@@ -20,7 +22,7 @@ interface CalendarEvent {
   day: number;
   startHour: number;
   endHour: number;
-  type: "focus" | "meeting" | "break" | "planning";
+  type: ScheduleType;
 }
 
 const agents: Agent[] = [
@@ -33,29 +35,6 @@ const agents: Agent[] = [
 
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const hours = Array.from({ length: 14 }, (_, i) => i + 8);
-
-const events: CalendarEvent[] = [
-  { id: "1", title: "Daily Standup", agentId: "rex", day: 0, startHour: 9, endHour: 9.5, type: "meeting" },
-  { id: "2", title: "Code Review", agentId: "mosa", day: 0, startHour: 10, endHour: 11, type: "focus" },
-  { id: "3", title: "Design Sync", agentId: "tricera", day: 0, startHour: 14, endHour: 15, type: "meeting" },
-  { id: "4", title: "Research Deep Dive", agentId: "pteroda", day: 0, startHour: 9, endHour: 12, type: "focus" },
-  { id: "5", title: "Strategy Planning", agentId: "bronto", day: 0, startHour: 13, endHour: 15, type: "planning" },
-  { id: "6", title: "Sprint Planning", agentId: "rex", day: 1, startHour: 10, endHour: 11.5, type: "planning" },
-  { id: "7", title: "UI Implementation", agentId: "mosa", day: 1, startHour: 9, endHour: 12, type: "focus" },
-  { id: "8", title: "Asset Creation", agentId: "tricera", day: 1, startHour: 13, endHour: 16, type: "focus" },
-  { id: "9", title: "Market Analysis", agentId: "pteroda", day: 1, startHour: 14, endHour: 17, type: "focus" },
-  { id: "10", title: "Architecture Review", agentId: "bronto", day: 2, startHour: 9, endHour: 11, type: "meeting" },
-  { id: "11", title: "Feature Development", agentId: "mosa", day: 2, startHour: 11, endHour: 16, type: "focus" },
-  { id: "12", title: "Creative Workshop", agentId: "tricera", day: 2, startHour: 10, endHour: 12, type: "meeting" },
-  { id: "13", title: "Daily Standup", agentId: "rex", day: 2, startHour: 9, endHour: 9.5, type: "meeting" },
-  { id: "14", title: "Bug Fixes", agentId: "mosa", day: 3, startHour: 9, endHour: 11, type: "focus" },
-  { id: "15", title: "Performance Audit", agentId: "pteroda", day: 3, startHour: 13, endHour: 15, type: "focus" },
-  { id: "16", title: "Team Sync", agentId: "rex", day: 3, startHour: 15, endHour: 16, type: "meeting" },
-  { id: "17", title: "Code Review", agentId: "bronto", day: 3, startHour: 11, endHour: 12, type: "meeting" },
-  { id: "18", title: "Design Review", agentId: "tricera", day: 4, startHour: 10, endHour: 12, type: "meeting" },
-  { id: "19", title: "Documentation", agentId: "pteroda", day: 4, startHour: 9, endHour: 11, type: "focus" },
-  { id: "20", title: "Weekly Review", agentId: "rex", day: 4, startHour: 16, endHour: 17, type: "meeting" },
-];
 
 const getEventTypeStyle = (type: string) => {
   switch (type) {
@@ -72,21 +51,239 @@ const getEventTypeStyle = (type: string) => {
   }
 };
 
+// Map agent_id from database to AgentId type
+const mapAgentId = (agentId: string): AgentId => {
+  const validAgents: AgentId[] = ["rex", "mosa", "bronto", "tricera", "pteroda"];
+  return validAgents.includes(agentId as AgentId) ? (agentId as AgentId) : "rex";
+};
+
+// Convert database schedule to calendar event
+const mapScheduleToEvent = (schedule: AgentSchedule): CalendarEvent => ({
+  id: schedule.id,
+  title: schedule.title,
+  agentId: mapAgentId(schedule.agent_id),
+  day: schedule.day_of_week,
+  startHour: schedule.start_hour,
+  endHour: schedule.end_hour,
+  type: schedule.type || "focus",
+});
+
 export default function OfficeCalendar() {
   const [currentWeek, setCurrentWeek] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Form state
+  const [showForm, setShowForm] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    agent_id: "rex" as AgentId,
+    title: "",
+    day_of_week: 0,
+    start_hour: 9,
+    end_hour: 10,
+    type: "focus" as ScheduleType,
+  });
+
   const today = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
 
+  // Fetch schedules on mount
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    fetchSchedules();
     return () => clearInterval(timer);
   }, []);
+
+  const fetchSchedules = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const schedules = await getAgentSchedules();
+      setEvents(schedules.map(mapScheduleToEvent));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load schedules");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setFormLoading(true);
+      await createSchedule({
+        agent_id: newEvent.agent_id,
+        title: newEvent.title,
+        day_of_week: newEvent.day_of_week,
+        start_hour: newEvent.start_hour,
+        end_hour: newEvent.end_hour,
+        type: newEvent.type,
+      });
+      await fetchSchedules();
+      setShowForm(false);
+      setNewEvent({
+        agent_id: "rex",
+        title: "",
+        day_of_week: 0,
+        start_hour: 9,
+        end_hour: 10,
+        type: "focus",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create schedule");
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    try {
+      await deleteSchedule(id);
+      await fetchSchedules();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete schedule");
+    }
+  };
 
   const currentHour = currentTime.getHours() + currentTime.getMinutes() / 60;
   const timeIndicatorTop = ((currentHour - 8) / 14) * 100;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0D1117] text-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-[#00F5FF] animate-spin" />
+          <p className="text-[#8a8a95]">Loading schedules...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0D1117] text-white p-6">
+      {/* Error Toast */}
+      {error && (
+        <div className="fixed top-4 right-4 bg-red-500/90 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="hover:text-red-200">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Add Event Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#161B22] rounded-xl border border-white/10 p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Add New Schedule</h2>
+              <button 
+                onClick={() => setShowForm(false)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateEvent} className="space-y-4">
+              <div>
+                <label className="block text-sm text-[#8a8a95] mb-1">Agent</label>
+                <select
+                  value={newEvent.agent_id}
+                  onChange={(e) => setNewEvent({...newEvent, agent_id: e.target.value as AgentId})}
+                  className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#00F5FF] focus:outline-none"
+                >
+                  {agents.map(agent => (
+                    <option key={agent.id} value={agent.id}>{agent.emoji} {agent.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm text-[#8a8a95] mb-1">Title</label>
+                <input
+                  type="text"
+                  value={newEvent.title}
+                  onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+                  placeholder="e.g., Daily Standup"
+                  required
+                  className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#00F5FF] focus:outline-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm text-[#8a8a95] mb-1">Day</label>
+                <select
+                  value={newEvent.day_of_week}
+                  onChange={(e) => setNewEvent({...newEvent, day_of_week: parseInt(e.target.value)})}
+                  className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#00F5FF] focus:outline-none"
+                >
+                  {weekDays.map((day, i) => (
+                    <option key={i} value={i}>{day}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-[#8a8a95] mb-1">Start Hour</label>
+                  <select
+                    value={newEvent.start_hour}
+                    onChange={(e) => setNewEvent({...newEvent, start_hour: parseFloat(e.target.value)})}
+                    className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#00F5FF] focus:outline-none"
+                  >
+                    {hours.map(h => (
+                      <option key={h} value={h}>{h}:00</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-[#8a8a95] mb-1">End Hour</label>
+                  <select
+                    value={newEvent.end_hour}
+                    onChange={(e) => setNewEvent({...newEvent, end_hour: parseFloat(e.target.value)})}
+                    className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#00F5FF] focus:outline-none"
+                  >
+                    {hours.filter(h => h > newEvent.start_hour).map(h => (
+                      <option key={h} value={h}>{h}:00</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm text-[#8a8a95] mb-1">Type</label>
+                <select
+                  value={newEvent.type}
+                  onChange={(e) => setNewEvent({...newEvent, type: e.target.value as ScheduleType})}
+                  className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-3 py-2 text-white focus:border-[#00F5FF] focus:outline-none"
+                >
+                  <option value="focus">Focus</option>
+                  <option value="meeting">Meeting</option>
+                  <option value="planning">Planning</option>
+                  <option value="break">Break</option>
+                </select>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={formLoading || !newEvent.title.trim()}
+                className="w-full py-3 bg-gradient-to-r from-[#0066ff] to-[#00ffff] rounded-lg font-medium hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {formLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Plus size={18} />
+                )}
+                Add Schedule
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="mb-6">
         <div className="flex items-center justify-between">
@@ -115,6 +312,13 @@ export default function OfficeCalendar() {
               className="p-2 rounded-lg bg-[#161B22] border border-white/10 hover:border-[#00F5FF]/50 hover:text-[#00F5FF] transition-colors"
             >
               <ChevronRight size={20} />
+            </button>
+            <button
+              onClick={() => setShowForm(true)}
+              className="ml-2 px-4 py-2 bg-gradient-to-r from-[#0066ff] to-[#00ffff] rounded-lg font-medium hover:brightness-110 transition-all flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Add
             </button>
           </div>
         </div>
@@ -208,7 +412,7 @@ export default function OfficeCalendar() {
                       return (
                         <div
                           key={event.id}
-                          className={`absolute left-1 right-1 rounded-lg px-2 py-1 text-xs border cursor-pointer hover:brightness-110 transition-all hover:scale-[1.02] ${getEventTypeStyle(event.type)}`}
+                          className={`absolute left-1 right-1 rounded-lg px-2 py-1 text-xs border cursor-pointer hover:brightness-110 transition-all hover:scale-[1.02] group/event ${getEventTypeStyle(event.type)}`}
                           style={{
                             top: `${startOffset}%`,
                             height: `${height}%`,
@@ -216,7 +420,18 @@ export default function OfficeCalendar() {
                           }}
                           title={`${event.title} (${event.startHour}:00 - ${event.endHour}:00)`}
                         >
-                          <p className="font-medium text-white truncate">{event.title}</p>
+                          <div className="flex items-start justify-between">
+                            <p className="font-medium text-white truncate flex-1">{event.title}</p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEvent(event.id);
+                              }}
+                              className="opacity-0 group-hover/event:opacity-100 hover:text-red-300 transition-opacity p-0.5"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
                           <p className="text-white/70 text-[10px]">
                             {Math.floor(event.startHour)}:{String((event.startHour % 1) * 60).padStart(2, "0")} - {Math.floor(event.endHour)}:{String((event.endHour % 1) * 60).padStart(2, "0")}
                           </p>
