@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Target, Zap, Trophy, Crown, Activity, TrendingUp, Star, Plus, X } from "lucide-react";
+import { Calendar, Target, Zap, Trophy, Crown, Activity, TrendingUp, Star, Plus, X, Brain, ArrowRight } from "lucide-react";
 import { getUserGoals, createGoal, updateGoalProgress, UserGoal, getUserSkills, createSkill, updateSkillLevel, UserSkill, getUserStats, UserStat } from "@/lib/db-actions";
+import Link from "next/link";
 
 const formatStatValue = (stat: UserStat | undefined, suffix: string = '') => {
   if (!stat) return 'Loading...';
@@ -215,6 +216,16 @@ export default function YuanPage() {
               <p className="text-sm text-[#8a8a95]">Your personal command center</p>
             </div>
           </div>
+          
+          {/* Second Brain Button */}
+          <Link
+            href="/brain"
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#0066ff]/20 to-[#00ffff]/20 border border-[#0066ff]/40 rounded-xl hover:border-[#00ffff]/60 hover:from-[#0066ff]/30 hover:to-[#00ffff]/30 transition-all group"
+          >
+            <Brain size={18} className="text-[#00ffff]" />
+            <span className="font-medium text-[#00ffff]">Second Brain</span>
+            <ArrowRight size={14} className="text-[#00ffff] group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
       </header>
 
