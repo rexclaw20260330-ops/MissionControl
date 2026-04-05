@@ -253,3 +253,51 @@ export async function deleteSkill(id: string) {
   
   if (error) throw error;
 }
+
+// User Stats
+export interface UserStat {
+  id: string;
+  user_id: string;
+  stat_key: string;
+  stat_value: number;
+  stat_change: number;
+  updated_at: string;
+  created_at: string;
+}
+
+export async function getUserStats() {
+  const { data, error } = await supabase
+    .from('user_stats')
+    .select('*')
+    .order('stat_key', { ascending: true });
+  
+  if (error) throw error;
+  return data as UserStat[];
+}
+
+export async function updateStat(key: string, value: number, change: number = 0) {
+  const { data, error } = await supabase
+    .from('user_stats')
+    .upsert({ stat_key: key, stat_value: value, stat_change: change }, { onConflict: 'stat_key' })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data as UserStat;
+}
+
+export async function incrementStat(key: string, amount: number = 1) {
+  const { data: existing } = await supabase
+    .from('user_stats')
+    .select('*')
+    .eq('stat_key', key)
+    .single();
+  
+  if (existing) {
+    const newValue = existing.stat_value + amount;
+    const newChange = existing.stat_change + amount;
+    return updateStat(key, newValue, newChange);
+  }
+  
+  return updateStat(key, amount, amount);
+}

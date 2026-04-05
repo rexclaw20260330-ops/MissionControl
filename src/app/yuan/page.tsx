@@ -2,14 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { Calendar, Target, Zap, Trophy, Crown, Activity, TrendingUp, Star, Plus, X } from "lucide-react";
-import { getUserGoals, createGoal, updateGoalProgress, UserGoal, getUserSkills, createSkill, updateSkillLevel, UserSkill } from "@/lib/db-actions";
+import { getUserGoals, createGoal, updateGoalProgress, UserGoal, getUserSkills, createSkill, updateSkillLevel, UserSkill, getUserStats, UserStat } from "@/lib/db-actions";
 
-const stats = [
-  { label: "Tasks Completed", value: "—", change: "—", icon: Zap },
-  { label: "Projects Active", value: "—", change: "—", icon: Target },
-  { label: "Agent Hours", value: "—", change: "—", icon: Activity },
-  { label: "Win Rate", value: "—", change: "—", icon: Trophy },
-];
+const formatStatValue = (stat: UserStat | undefined, suffix: string = '') => {
+  if (!stat) return '—';
+  const value = stat.stat_value;
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}K${suffix}`;
+  return `${value}${suffix}`;
+};
+
+const formatStatChange = (stat: UserStat | undefined) => {
+  if (!stat) return '—';
+  const change = stat.stat_change;
+  if (change > 0) return `+${change}`;
+  return `${change}`;
+};
 
 // Generate days for mini calendar
 const generateCalendarDays = () => {
@@ -97,6 +104,7 @@ const SkillsRadar = ({ skills }: { skills: UserSkill[] }) => {
 export default function YuanPage() {
   const [goals, setGoals] = useState<UserGoal[]>([]);
   const [skills, setSkills] = useState<UserSkill[]>([]);
+  const [stats, setStats] = useState<UserStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
@@ -112,12 +120,14 @@ export default function YuanPage() {
     try {
       setLoading(true);
       setError(null);
-      const [goalsData, skillsData] = await Promise.all([
+      const [goalsData, skillsData, statsData] = await Promise.all([
         getUserGoals(),
         getUserSkills(),
+        getUserStats(),
       ]);
       setGoals(goalsData);
       setSkills(skillsData);
+      setStats(statsData);
     } catch (err) {
       setError("Failed to load data");
       console.error(err);
@@ -241,19 +251,24 @@ export default function YuanPage() {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
-              {stats.map((stat) => {
-                const Icon = stat.icon;
+              {[
+                { key: 'tasks_completed', label: "Tasks Completed", icon: Zap },
+                { key: 'projects_active', label: "Projects Active", icon: Target },
+                { key: 'agent_hours', label: "Agent Hours", icon: Activity },
+                { key: 'win_rate', label: "Win Rate", icon: Trophy },
+              ].map(({ key, label, icon: Icon }) => {
+                const stat = stats.find(s => s.stat_key === key);
                 return (
                   <div
-                    key={stat.label}
+                    key={key}
                     className="bg-[#121218] border border-[#FFD700]/20 rounded-2xl p-4 hover:border-[#FFD700]/40 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <Icon className="text-[#FFD700]" size={20} />
-                      <span className="text-xs text-emerald-400">{stat.change}</span>
+                      <span className="text-xs text-emerald-400">{formatStatChange(stat)}</span>
                     </div>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-sm text-[#8a8a95]">{stat.label}</p>
+                    <p className="text-2xl font-bold">{key === 'win_rate' ? formatStatValue(stat, '%') : formatStatValue(stat)}</p>
+                    <p className="text-sm text-[#8a8a95]">{label}</p>
                   </div>
                 );
               })}

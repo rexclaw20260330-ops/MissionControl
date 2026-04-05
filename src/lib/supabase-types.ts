@@ -95,9 +95,20 @@ export interface UserSkillInsert {
   max_level?: number;
 }
 
+export interface UserStat {
+  id: string;
+  user_id: string;
+  stat_key: string;
+  stat_value: number;
+  stat_change: number;
+  updated_at: string;
+  created_at: string;
+}
+
 export interface Database {
   missions: Mission;
   agent_schedules: AgentSchedule;
   user_goals: UserGoal;
   user_skills: UserSkill;
+  user_stats: UserStat;
 }
