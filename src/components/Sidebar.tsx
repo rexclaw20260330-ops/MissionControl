@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   LayoutDashboard,
-  KanbanSquare,
+  Target,
+  Crown,
   Calendar,
   FolderKanban,
   Users,
@@ -17,11 +18,12 @@ import { RestartButton } from "@/components/RestartButton";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Task Board", href: "/tasks", icon: KanbanSquare },
+  { name: "Missionboard", href: "/missions", icon: Target },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "Team", href: "/team", icon: Users },
   { name: "Office", href: "/office", icon: Building2 },
+  { name: "Yuan", href: "/yuan", icon: Crown },
 ];
 
 export function Sidebar() {
