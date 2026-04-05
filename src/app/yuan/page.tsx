@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Calendar, Target, Zap, Trophy, Crown, Activity, TrendingUp, Star, Plus, X, Brain, ArrowRight } from "lucide-react";
-import { getUserGoals, createGoal, updateGoalProgress, UserGoal, getUserSkills, createSkill, updateSkillLevel, UserSkill, getUserStats, UserStat } from "@/lib/db-actions";
+import { getUserGoals, createGoal, updateGoalProgress, UserGoal, getUserSkills, createSkill, updateSkillLevel, UserSkill, getUserStats } from "@/lib/db-actions";
+import type { UserStat } from "@/lib/supabase-types";
 import Link from "next/link";
 
 const formatStatValue = (stat: UserStat | undefined, suffix: string = '') => {
