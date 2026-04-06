@@ -351,6 +351,26 @@ export default function YuanPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dailyQuote, setDailyQuote] = useState(quotes[0]);
 
+  // Event modal state
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    description: "",
+    start_time: "",
+    end_time: "",
+    category: "personal",
+    user_id: "yuan"
+  });
+
+  // Category color mapping
+  const categoryColors: Record<string, string> = {
+    learning: "#10B981",
+    work: "#0066ff",
+    personal: "#F59E0B",
+    fitness: "#EF4444",
+    other: "#8B5CF6"
+  };
+
   // Real data from database
   const [streak, setStreak] = useState<LearningStreak | null>(null);
   const [todayProgress, setTodayProgress] = useState({ percent: 0, minutes: 0, items: 0 });
@@ -374,7 +394,7 @@ export default function YuanPage() {
         getUserGoals(),
         getUserSkills(),
         getUserStats(),
-        fetch('/api/calendar/events').then(res => res.json()),
+        fetch('/api/calendar/events?user_id=yuan').then(res => res.json()),
         getLearningStreak().catch(() => null),
         getTodayProgress().catch(() => ({ percent: 0, minutes: 0, items: 0 })),
         getWeeklyStudyHours().catch(() => 0),
@@ -461,6 +481,55 @@ export default function YuanPage() {
       newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
     }
     setCurrentDate(newDate);
+  };
+
+  const handleCreateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEvent.title || !newEvent.start_time || !newEvent.end_time) return;
+
+    try {
+      const eventData = {
+        ...newEvent,
+        color: categoryColors[newEvent.category] || categoryColors.other
+      };
+
+      const response = await fetch('/api/calendar/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventData)
+      });
+
+      if (!response.ok) throw new Error('Failed to create event');
+
+      setIsEventModalOpen(false);
+      setNewEvent({
+        title: "",
+        description: "",
+        start_time: "",
+        end_time: "",
+        category: "personal",
+        user_id: "yuan"
+      });
+      await loadData();
+    } catch (err) {
+      console.error("Failed to create event:", err);
+    }
+  };
+
+  const openEventModal = (date?: Date, hour?: number) => {
+    const now = date || new Date();
+    const startHour = hour !== undefined ? hour : now.getHours();
+    const startTime = new Date(now);
+    startTime.setHours(startHour, 0, 0, 0);
+    const endTime = new Date(startTime);
+    endTime.setHours(startHour + 1);
+
+    setNewEvent({
+      ...newEvent,
+      start_time: startTime.toISOString().slice(0, 16),
+      end_time: endTime.toISOString().slice(0, 16)
+    });
+    setIsEventModalOpen(true);
   };
 
   if (loading) {
@@ -557,6 +626,13 @@ export default function YuanPage() {
                     className="p-2 hover:bg-white/5 rounded-lg transition-colors"
                   >
                     <ChevronRight size={20} />
+                  </button>
+                  <button
+                    onClick={() => openEventModal()}
+                    className="ml-2 flex items-center gap-2 px-3 py-2 bg-[#00F5FF] text-black rounded-lg hover:bg-[#00F5FF]/90 transition-colors text-sm font-medium"
+                  >
+                    <Plus size={16} />
+                    Add Event
                   </button>
                 </div>
               </div>
