@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Target, Users, ChevronRight, X, Rocket, Code, Palette, Search, Brain, Plus, Loader2, AlertCircle, Trash2, Pencil } from "lucide-react";
-import { getMissions, createMission, updateMission, updateMissionProgress, deleteMission, Mission, MissionInsert } from "@/lib/db-actions";
+import { getMissions, createMission, updateMission, updateMissionProgress, deleteMission, Mission, MissionInsert, MissionUpdate } from "@/lib/db-actions";
 
 type AgentId = "rex" | "mosa" | "bronto" | "tricera" | "pteroda";
 
