@@ -21,24 +21,24 @@ const hierarchy = {
   rex: {
     id: "rex",
     name: "Rex",
-    role: "Main OpenClaw Agent",
+    role: "CEO / Planner",
     type: "main",
     status: "online",
     device: "Cloud",
-    description: "Primary AI assistant. Manages all tasks and coordinates with sub-agents.",
+    description: "The only mission definer and final decision maker. Coordinates the entire squad.",
     emoji: "🦖",
     gradient: "from-[#0066ff] to-[#00ffff]",
     icon: Bot,
   },
   agents: [
-    { id: "tricera", name: "Tricera", role: "Art Director", type: "sub", status: "online", device: "Mac Studio", description: "Creative lead for all visual design, UI/UX, and pixel art projects.", emoji: "🦕", gradient: "from-purple-500 to-pink-500", icon: User },
-    { id: "pteroda", name: "Pteroda", role: "Researcher", type: "sub", status: "online", device: "Cloud", description: "Gathers information, analyzes data, and provides insights for decision making.", emoji: "🦅", gradient: "from-amber-500 to-orange-500", icon: BookOpen },
-    { id: "bronto", name: "Bronto", role: "Planner", type: "sub", status: "online", device: "Cloud", description: "Strategic thinker who breaks down complex projects into actionable steps.", emoji: "🦒", gradient: "from-emerald-500 to-teal-500", icon: Calendar },
-    { id: "mosa", name: "Mosa", role: "Developer", type: "sub", status: "online", device: "MacBook Pro", description: "Code expert who builds features, fixes bugs, and maintains technical infrastructure.", emoji: "🐊", gradient: "from-rose-500 to-red-500", icon: Code },
+    { id: "tricera", name: "Tricera", role: "UI/UX Designer", type: "sub", status: "online", device: "Mac Studio", description: "Creates designs that flow directly to Mosa for implementation.", emoji: "🦕", gradient: "from-purple-500 to-pink-500", icon: User },
+    { id: "pteroda", name: "Pteroda", role: "Investment Researcher", type: "sub", status: "online", device: "Cloud", description: "Data-driven analysis only—no advice, just facts. Responds to research assignments from Rex.", emoji: "🦅", gradient: "from-amber-500 to-orange-500", icon: BookOpen },
+    { id: "bronto", name: "Bronto", role: "QA Engineer", type: "sub", status: "online", device: "Cloud", description: "Validates code, features, and UX. Scores: requirements (0-10), UX (0-10), logic (0-10). Output: PASS/FAIL.", emoji: "🦒", gradient: "from-emerald-500 to-teal-500", icon: Calendar },
+    { id: "mosa", name: "Mosa", role: "Software Engineer", type: "sub", status: "online", device: "MacBook Pro", description: "Implements Tricera's designs directly. Builds features and maintains infrastructure.", emoji: "🐊", gradient: "from-rose-500 to-red-500", icon: Code },
   ],
 };
 
-const mission = "Build an autonomous organization of AI agents that do work and produce value 24/7.";
+const mission = "Rex (CEO) defines missions → Tricera (UI/UX) designs → Mosa (Engineer) builds → Pteroda (Research) analyzes → Bronto (QA) validates. End-to-end execution.";
 
 // Star particles for background
 const StarParticles = () => (
@@ -282,7 +282,7 @@ export default function Team() {
       <NebulaGlow />
       <header className="mb-8">
         <h1 className="text-4xl font-black text-white mb-2 tracking-tighter">Team</h1>
-        <p className="text-[#8a8a95]">Your AI dinosaur organization hierarchy and mission statement.</p>
+        <p className="text-[#8a8a95]">DinoSquad - Five specialized AI agents working together to execute missions.</p>
       </header>
 
       {/* Mission Statement - Space Command Style */}
@@ -398,6 +398,14 @@ export default function Team() {
                 <p className="text-[#8a8a95] text-xs">Specialized workers</p>
               </div>
             </div>
+          </div>
+          
+          {/* API Limit Note */}
+          <div className="mt-4 pt-4 border-t border-[#0066ff]/10">
+            <p className="text-[#8a8a95] text-xs flex items-center gap-2">
+              <span className="text-[#FFB800]">⚠️</span>
+              Note: Max 3 agents can be called simultaneously via API.
+            </p>
           </div>
         </div>
       </div>
