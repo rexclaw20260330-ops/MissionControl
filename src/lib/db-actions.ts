@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { Mission, MissionInsert, MissionUpdate, MissionStatus, AgentSchedule, AgentScheduleInsert, UserGoal, UserGoalInsert, UserSkill, UserSkillInsert, LearningStreak, LearningStreakInsert, LearningLog, LearningLogInsert, Task } from './supabase-types';
 
 // Re-export types for components
-export type { Mission, MissionInsert, MissionUpdate, MissionStatus, AgentSchedule, AgentScheduleInsert, UserGoal, UserGoalInsert, UserSkill, UserSkillInsert };
+export type { Mission, MissionInsert, MissionUpdate, MissionStatus, AgentSchedule, AgentScheduleInsert, UserGoal, UserGoalInsert, UserSkill, UserSkillInsert, LearningStreak, LearningStreakInsert, LearningLog, LearningLogInsert, Task };
 
 // Missions
 export async function getMissions() {
