@@ -668,7 +668,12 @@ export default function Missionboard() {
   // Edit mission
   const handleEditMission = async (id: string, updates: Partial<Mission>) => {
     try {
-      await updateMission(id, updates);
+      // Convert null description to undefined to match MissionUpdate type
+      const sanitizedUpdates: MissionUpdate = {
+        ...updates,
+        description: updates.description === null ? undefined : updates.description,
+      };
+      await updateMission(id, sanitizedUpdates);
       fetchMissions();
     } catch (err: any) {
       setError(err.message || "Failed to update mission. Please try again.");
