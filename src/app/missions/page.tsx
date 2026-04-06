@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Target, Users, ChevronRight, X, Rocket, Code, Palette, Search, Brain, Plus, Loader2, AlertCircle, Trash2 } from "lucide-react";
-import { getMissions, createMission, updateMissionProgress, deleteMission, Mission, MissionInsert } from "@/lib/db-actions";
+import { Target, Users, ChevronRight, X, Rocket, Code, Palette, Search, Brain, Plus, Loader2, AlertCircle, Trash2, Pencil } from "lucide-react";
+import { getMissions, createMission, updateMission, updateMissionProgress, deleteMission, Mission, MissionInsert } from "@/lib/db-actions";
 
 type AgentId = "rex" | "mosa" | "bronto" | "tricera" | "pteroda";
 
@@ -388,6 +388,215 @@ function UpdateProgressModal({ isOpen, onClose, onSubmit, currentProgress, missi
   );
 }
 
+// Edit Mission Modal
+interface EditMissionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (id: string, updates: Partial<Mission>) => void;
+  mission: Project | null;
+}
+
+function EditMissionModal({ isOpen, onClose, onSubmit, mission }: EditMissionModalProps) {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    responsibleAgent: "rex" as AgentId,
+    participatingAgents: [] as AgentId[],
+    status: "planning" as "planning" | "active" | "completed" | "on-hold",
+    progress: 0,
+    priority: "medium" as "low" | "medium" | "high" | "critical",
+    deadline: "",
+  });
+
+  useEffect(() => {
+    if (mission) {
+      setFormData({
+        name: mission.name,
+        description: mission.description,
+        responsibleAgent: mission.responsibleAgent,
+        participatingAgents: mission.participatingAgents,
+        status: mission.status,
+        progress: mission.progress,
+        priority: mission.priority,
+        deadline: mission.deadline || "",
+      });
+    }
+  }, [mission, isOpen]);
+
+  if (!isOpen || !mission) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(mission.id, {
+      name: formData.name,
+      description: formData.description,
+      responsible_agent: formData.responsibleAgent,
+      participating_agents: formData.participatingAgents,
+      status: formData.status,
+      progress: formData.progress,
+      priority: formData.priority,
+      deadline: formData.deadline || undefined,
+    });
+    onClose();
+  };
+
+  const toggleAgent = (agentId: AgentId) => {
+    setFormData(prev => ({
+      ...prev,
+      participatingAgents: prev.participatingAgents.includes(agentId)
+        ? prev.participatingAgents.filter(id => id !== agentId)
+        : [...prev.participatingAgents, agentId]
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="w-full max-w-lg bg-[#161B22] rounded-xl border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Pencil size={20} className="text-[#00F5FF]" />
+              Edit Mission
+            </h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Mission Name</label>
+            <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-[#00F5FF] focus:outline-none transition-colors"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Description</label>
+            <textarea
+              rows={3}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-[#00F5FF] focus:outline-none transition-colors resize-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Responsible Agent</label>
+            <select
+              value={formData.responsibleAgent}
+              onChange={(e) => setFormData({ ...formData, responsibleAgent: e.target.value as AgentId })}
+              className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-[#00F5FF] focus:outline-none transition-colors"
+            >
+              {(Object.keys(agents) as AgentId[]).map((agentId) => (
+                <option key={agentId} value={agentId}>{agents[agentId].name} {agents[agentId].emoji}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Status</label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as typeof formData.status })}
+                className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-[#00F5FF] focus:outline-none transition-colors"
+              >
+                <option value="planning">Planning</option>
+                <option value="active">Active</option>
+                <option value="on-hold">On Hold</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Priority</label>
+              <select
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value as typeof formData.priority })}
+                className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-[#00F5FF] focus:outline-none transition-colors"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Progress: {formData.progress}%</label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={formData.progress}
+              onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
+              className="w-full accent-[#00F5FF]"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Deadline</label>
+            <input
+              type="date"
+              value={formData.deadline}
+              onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+              className="w-full bg-[#0D1117] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-[#00F5FF] focus:outline-none transition-colors"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Participating Agents</label>
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(agents) as AgentId[]).map((agentId) => {
+                const agent = agents[agentId];
+                const isSelected = formData.participatingAgents.includes(agentId);
+                return (
+                  <button
+                    key={agentId}
+                    type="button"
+                    onClick={() => toggleAgent(agentId)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
+                      isSelected
+                        ? `${agent.borderColor} bg-gradient-to-r ${agent.gradient} bg-opacity-10`
+                        : "border-white/10 hover:border-white/30"
+                    }`}
+                  >
+                    <span>{agent.emoji}</span>
+                    <span className={`text-sm ${isSelected ? "text-white" : "text-gray-400"}`}>{agent.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/30 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2.5 rounded-lg bg-[#00F5FF] text-[#0D1117] font-bold hover:bg-[#00F5FF]/90 transition-colors"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function Missionboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -396,6 +605,7 @@ export default function Missionboard() {
   const [hoveredProject, setHoveredProject] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Fetch missions from Supabase
   const fetchMissions = useCallback(async () => {
@@ -452,6 +662,30 @@ export default function Missionboard() {
       fetchMissions();
     } catch (err: any) {
       setError(err.message || "Failed to delete mission. Please try again.");
+    }
+  };
+
+  // Edit mission
+  const handleEditMission = async (id: string, updates: Partial<Mission>) => {
+    try {
+      await updateMission(id, updates);
+      fetchMissions();
+    } catch (err: any) {
+      setError(err.message || "Failed to update mission. Please try again.");
+    }
+  };
+
+  // Cycle priority (low -> medium -> high -> critical -> low)
+  const handleCyclePriority = async (project: Project) => {
+    const priorityOrder: Array<"low" | "medium" | "high" | "critical"> = ["low", "medium", "high", "critical"];
+    const currentIndex = priorityOrder.indexOf(project.priority);
+    const nextPriority = priorityOrder[(currentIndex + 1) % priorityOrder.length];
+    
+    try {
+      await updateMission(project.id, { priority: nextPriority });
+      fetchMissions();
+    } catch (err: any) {
+      setError(err.message || "Failed to update priority. Please try again.");
     }
   };
 
@@ -563,9 +797,32 @@ export default function Missionboard() {
                       <div className={`px-3 py-1 rounded-full text-xs font-medium border ${status.bg} ${status.color} ${status.border}`}>
                         {status.label}
                       </div>
-                      <div className="flex items-center gap-1 text-xs">
-                        <div className={`w-2 h-2 rounded-full ${priority.dot}`} />
-                        <span className={priority.color}>{project.priority}</span>
+                      <div className="flex items-center gap-2">
+                        {/* Edit Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProject(project);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="p-2 bg-[#1e1e2a] text-[#00F5FF] rounded-lg hover:bg-[#00F5FF]/20 border border-[#00F5FF]/30 transition-colors"
+                          title="Edit mission"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        
+                        {/* Priority Badge - Clickable */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCyclePriority(project);
+                          }}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#1e1e2a] border border-white/10 hover:border-white/30 transition-colors"
+                          title="Click to change priority"
+                        >
+                          <div className={`w-2 h-2 rounded-full ${priority.dot}`} />
+                          <span className={`text-xs font-medium ${priority.color}`}>{project.priority}</span>
+                        </button>
                       </div>
                     </div>
                     <h3 className="text-lg font-bold text-white group-hover:text-[#00F5FF] transition-colors">
@@ -810,6 +1067,17 @@ export default function Missionboard() {
           </div>
         </div>
       )}
+
+      {/* Edit Mission Modal */}
+      <EditMissionModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedProject(null);
+        }}
+        onSubmit={handleEditMission}
+        mission={selectedProject}
+      />
     </div>
   );
 }
