@@ -186,7 +186,7 @@ const SkillsRadar = ({ skills }: { skills: UserSkill[] }) => {
 };
 
 // Day View Component
-const DayView = ({ date, events }: { date: Date; events: CalendarEvent[] }) => {
+const DayView = ({ date, events, onTimeSlotClick }: { date: Date; events: CalendarEvent[]; onTimeSlotClick?: (date: Date, hour: number) => void }) => {
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.start_time);
@@ -205,7 +205,11 @@ const DayView = ({ date, events }: { date: Date; events: CalendarEvent[] }) => {
             return eventHour === hour;
           });
           return (
-            <div key={hour} className="flex gap-2 min-h-[40px]">
+            <div 
+              key={hour} 
+              className="flex gap-2 min-h-[40px] cursor-pointer hover:bg-white/5 transition-colors"
+              onClick={() => onTimeSlotClick && onTimeSlotClick(date, hour)}
+            >
               <div className="w-12 text-xs text-[#8a8a95] text-right pt-2">
                 {hour.toString().padStart(2, '0')}:00
               </div>
@@ -276,7 +280,7 @@ const WeekView = ({ date, events }: { date: Date; events: CalendarEvent[] }) => 
 };
 
 // Month View Component
-const MonthView = ({ date, events }: { date: Date; events: CalendarEvent[] }) => {
+const MonthView = ({ date, events, onDayClick }: { date: Date; events: CalendarEvent[]; onDayClick?: (date: Date) => void }) => {
   const year = date.getFullYear();
   const month = date.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
@@ -312,6 +316,7 @@ const MonthView = ({ date, events }: { date: Date; events: CalendarEvent[] }) =>
           return (
             <div
               key={day}
+              onClick={() => onDayClick && onDayClick(new Date(year, month, day))}
               className={`aspect-square p-2 rounded-lg cursor-pointer transition-all ${
                 isToday
                   ? 'bg-[#00F5FF] text-black font-bold'
@@ -638,9 +643,9 @@ export default function YuanPage() {
               </div>
 
               {/* Calendar Content */}
-              {calendarView === 'day' && <DayView date={currentDate} events={events} />}
+              {calendarView === 'day' && <DayView date={currentDate} events={events} onTimeSlotClick={openEventModal} />}
               {calendarView === 'week' && <WeekView date={currentDate} events={events} />}
-              {calendarView === 'month' && <MonthView date={currentDate} events={events} />}
+              {calendarView === 'month' && <MonthView date={currentDate} events={events} onDayClick={openEventModal} />}
             </div>
 
             {/* Learning Tracking Section */}
@@ -956,6 +961,94 @@ export default function YuanPage() {
                   className="px-4 py-2 bg-[#00F5FF] text-black rounded-lg font-semibold hover:bg-[#00D9E6] transition-colors"
                 >
                   Add Skill
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Event Modal */}
+      {isEventModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#161B22] border border-[#00F5FF]/20 rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">New Event</h2>
+              <button onClick={() => setIsEventModalOpen(false)} className="text-[#8a8a95] hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateEvent} className="space-y-4">
+              <div>
+                <label className="block text-sm text-[#8a8a95] mb-1">Event Title</label>
+                <input
+                  type="text"
+                  value={newEvent.title}
+                  onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                  className="w-full px-3 py-2 bg-[#0D1117] border border-[#00F5FF]/20 rounded-lg text-white focus:border-[#00F5FF] focus:outline-none"
+                  placeholder="e.g., Study React Hooks"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-[#8a8a95] mb-1">Description</label>
+                <textarea
+                  value={newEvent.description}
+                  onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                  className="w-full px-3 py-2 bg-[#0D1117] border border-[#00F5FF]/20 rounded-lg text-white focus:border-[#00F5FF] focus:outline-none resize-none"
+                  placeholder="Optional details..."
+                  rows={2}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-[#8a8a95] mb-1">Start Time</label>
+                  <input
+                    type="datetime-local"
+                    value={newEvent.start_time}
+                    onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#0D1117] border border-[#00F5FF]/20 rounded-lg text-white focus:border-[#00F5FF] focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-[#8a8a95] mb-1">End Time</label>
+                  <input
+                    type="datetime-local"
+                    value={newEvent.end_time}
+                    onChange={(e) => setNewEvent({ ...newEvent, end_time: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#0D1117] border border-[#00F5FF]/20 rounded-lg text-white focus:border-[#00F5FF] focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-[#8a8a95] mb-1">Category</label>
+                <select
+                  value={newEvent.category}
+                  onChange={(e) => setNewEvent({ ...newEvent, category: e.target.value })}
+                  className="w-full px-3 py-2 bg-[#0D1117] border border-[#00F5FF]/20 rounded-lg text-white focus:border-[#00F5FF] focus:outline-none"
+                >
+                  <option value="learning">📚 Learning</option>
+                  <option value="work">💼 Work</option>
+                  <option value="personal">👤 Personal</option>
+                  <option value="fitness">💪 Fitness</option>
+                  <option value="other">📝 Other</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsEventModalOpen(false)}
+                  className="px-4 py-2 text-[#8a8a95] hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#00F5FF] text-black rounded-lg font-semibold hover:bg-[#00D9E6] transition-colors"
+                >
+                  Create Event
                 </button>
               </div>
             </form>
