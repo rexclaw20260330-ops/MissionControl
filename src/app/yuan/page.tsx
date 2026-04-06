@@ -368,25 +368,44 @@ export default function YuanPage() {
     try {
       setLoading(true);
       setError(null);
-      const [goalsData, skillsData, statsData, eventsResponse, streakData, todayProg, weeklyHrs, completed] = await Promise.all([
+      
+      // Load data with individual error handling - don't fail everything if one fails
+      const results = await Promise.allSettled([
         getUserGoals(),
         getUserSkills(),
         getUserStats(),
         fetch('/api/calendar/events').then(res => res.json()),
-        getLearningStreak(),
-        getTodayProgress(),
-        getWeeklyStudyHours(),
-        getRecentlyCompletedTasks(),
+        getLearningStreak().catch(() => null),
+        getTodayProgress().catch(() => ({ percent: 0, minutes: 0, items: 0 })),
+        getWeeklyStudyHours().catch(() => 0),
+        getRecentlyCompletedTasks().catch(() => []),
       ]);
-      setGoals(goalsData);
-      setSkills(skillsData);
-      setStats(statsData);
-      setEvents(eventsResponse.events || []);
+      
+      // Extract data from results
+      const [goalsData, skillsData, statsData, eventsResponse, streakData, todayProg, weeklyHrs, completed] = results.map((r, i) => {
+        if (r.status === 'fulfilled') {
+          return r.value;
+        } else {
+          console.error(`Failed to load data[${i}]:`, r.reason);
+          // Return default values
+          if (i === 3) return { events: [] }; // eventsResponse
+          if (i === 4) return null; // streakData
+          if (i === 5) return { percent: 0, minutes: 0, items: 0 }; // todayProg
+          if (i === 6) return 0; // weeklyHrs
+          if (i === 7) return []; // completed
+          return [];
+        }
+      });
+      
+      setGoals(goalsData || []);
+      setSkills(skillsData || []);
+      setStats(statsData || []);
+      setEvents(eventsResponse?.events || []);
       setStreak(streakData);
-      setTodayProgress(todayProg);
-      setWeeklyHours(weeklyHrs);
-      setCompletedTasks(completed);
-      setWeeklyTasks(completed.length);
+      setTodayProgress(todayProg || { percent: 0, minutes: 0, items: 0 });
+      setWeeklyHours(weeklyHrs || 0);
+      setCompletedTasks(completed || []);
+      setWeeklyTasks((completed || []).length);
     } catch (err) {
       setError("Failed to load data");
       console.error(err);
