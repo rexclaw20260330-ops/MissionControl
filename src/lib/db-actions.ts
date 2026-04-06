@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Mission, MissionInsert, MissionUpdate, MissionStatus, AgentSchedule, AgentScheduleInsert, UserGoal, UserGoalInsert, UserSkill, UserSkillInsert } from './supabase-types';
+import { Mission, MissionInsert, MissionUpdate, MissionStatus, AgentSchedule, AgentScheduleInsert, UserGoal, UserGoalInsert, UserSkill, UserSkillInsert, LearningStreak, LearningStreakInsert, LearningLog, LearningLogInsert, Task } from './supabase-types';
 
 // Re-export types for components
 export type { Mission, MissionInsert, MissionUpdate, MissionStatus, AgentSchedule, AgentScheduleInsert, UserGoal, UserGoalInsert, UserSkill, UserSkillInsert };
@@ -303,4 +303,129 @@ export async function incrementStat(key: string, amount: number = 1) {
   }
   
   return updateStat(key, amount, amount);
+}
+
+// Learning Streaks
+export async function getLearningStreak(userId: string = 'yuan'): Promise<LearningStreak | null> {
+  const { data, error } = await supabase
+    .from('learning_streaks')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as LearningStreak | null;
+}
+
+export async function updateLearningStreak(userId: string = 'yuan', data: Partial<LearningStreakInsert>): Promise<LearningStreak> {
+  const { data: existing } = await supabase
+    .from('learning_streaks')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+  
+  if (existing) {
+    const { data: updated, error } = await supabase
+      .from('learning_streaks')
+      .update({ ...data, updated_at: new Date().toISOString() })
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated as LearningStreak;
+  } else {
+    const { data: created, error } = await supabase
+      .from('learning_streaks')
+      .insert({ user_id: userId, ...data })
+      .select()
+      .single();
+    if (error) throw error;
+    return created as LearningStreak;
+  }
+}
+
+// Learning Logs
+export async function getLearningLogs(userId: string = 'yuan', startDate?: string, endDate?: string): Promise<LearningLog[]> {
+  let query = supabase
+    .from('learning_logs')
+    .select('*')
+    .eq('user_id', userId)
+    .order('date', { ascending: false });
+  
+  if (startDate) {
+    query = query.gte('date', startDate);
+  }
+  if (endDate) {
+    query = query.lte('date', endDate);
+  }
+  
+  const { data, error } = await query;
+  if (error) throw error;
+  return data as LearningLog[];
+}
+
+export async function createLearningLog(log: LearningLogInsert): Promise<LearningLog> {
+  const { data, error } = await supabase
+    .from('learning_logs')
+    .insert(log)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data as LearningLog;
+}
+
+export async function getWeeklyStudyHours(userId: string = 'yuan'): Promise<number> {
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  
+  const { data, error } = await supabase
+    .from('learning_logs')
+    .select('total_minutes')
+    .eq('user_id', userId)
+    .gte('date', startOfWeek.toISOString().split('T')[0]);
+  
+  if (error) throw error;
+  
+  const totalMinutes = (data || []).reduce((sum, log) => sum + (log.total_minutes || 0), 0);
+  return Math.round((totalMinutes / 60) * 10) / 10;
+}
+
+export async function getTodayProgress(userId: string = 'yuan'): Promise<{ percent: number; minutes: number; items: number }> {
+  const today = new Date().toISOString().split('T')[0];
+  
+  const { data, error } = await supabase
+    .from('learning_logs')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('date', today)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  
+  if (data) {
+    return {
+      percent: data.daily_goal_percent || 0,
+      minutes: data.total_minutes || 0,
+      items: data.items_completed || 0,
+    };
+  }
+  
+  return { percent: 0, minutes: 0, items: 0 };
+}
+
+// Tasks
+export async function getRecentlyCompletedTasks(userId: string = 'yuan', limit: number = 5): Promise<Task[]> {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'completed')
+    .order('completed_at', { ascending: false })
+    .limit(limit);
+  
+  if (error) throw error;
+  return data as Task[];
 }

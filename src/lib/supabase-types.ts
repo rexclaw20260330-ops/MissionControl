@@ -105,10 +105,67 @@ export interface UserStat {
   created_at: string;
 }
 
+// Learning Streak
+export interface LearningStreak {
+  id: string;
+  user_id: string;
+  current_streak: number;
+  longest_streak: number;
+  last_learning_date: string | null;
+  total_learning_days: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LearningStreakInsert {
+  user_id?: string;
+  current_streak?: number;
+  longest_streak?: number;
+  last_learning_date?: string | null;
+  total_learning_days?: number;
+}
+
+// Learning Log
+export interface LearningLog {
+  id: string;
+  user_id: string;
+  date: string;
+  total_minutes: number;
+  items_completed: number;
+  daily_goal_percent: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LearningLogInsert {
+  user_id?: string;
+  date?: string;
+  total_minutes?: number;
+  items_completed?: number;
+  daily_goal_percent?: number;
+}
+
+// Task
+export interface Task {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  status: 'pending' | 'in_progress' | 'completed' | 'archived';
+  category: string;
+  priority: 'low' | 'medium' | 'high';
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   missions: Mission;
   agent_schedules: AgentSchedule;
   user_goals: UserGoal;
   user_skills: UserSkill;
   user_stats: UserStat;
+  learning_streaks: LearningStreak;
+  learning_logs: LearningLog;
+  tasks: Task;
 }
