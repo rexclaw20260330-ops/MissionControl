@@ -185,9 +185,8 @@ const SkillsRadar = ({ skills }: { skills: UserSkill[] }) => {
   );
 };
 
-// Day View Component
+// Day View Component - Simplified without time slots
 const DayView = ({ date, events, onTimeSlotClick }: { date: Date; events: CalendarEvent[]; onTimeSlotClick?: (date: Date, hour: number) => void }) => {
-  const hours = Array.from({ length: 24 }, (_, i) => i);
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.start_time);
     return eventDate.toDateString() === date.toDateString();
@@ -198,35 +197,20 @@ const DayView = ({ date, events, onTimeSlotClick }: { date: Date; events: Calend
       <div className="text-center text-[#00F5FF] font-bold text-lg mb-4">
         {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
       </div>
-      <div className="space-y-1 max-h-[400px] overflow-y-auto">
-        {hours.map(hour => {
-          const hourEvents = dayEvents.filter(event => {
-            const eventHour = new Date(event.start_time).getHours();
-            return eventHour === hour;
-          });
-          return (
-            <div 
-              key={hour} 
-              className="flex gap-2 min-h-[40px] cursor-pointer hover:bg-white/5 transition-colors"
-              onClick={() => onTimeSlotClick && onTimeSlotClick(date, hour)}
+      <div className="space-y-2 max-h-[400px] overflow-y-auto px-2">
+        {dayEvents.length === 0 ? (
+          <p className="text-[#8a8a95] text-center py-8">No events for this day</p>
+        ) : (
+          dayEvents.map(event => (
+            <div
+              key={event.id}
+              className="px-3 py-2 rounded text-sm text-white cursor-pointer hover:opacity-80 transition-opacity"
+              style={{ backgroundColor: event.color || '#00F5FF' }}
             >
-              <div className="w-12 text-xs text-[#8a8a95] text-right pt-2">
-                {hour.toString().padStart(2, '0')}:00
-              </div>
-              <div className="flex-1 border-t border-[#1f2937] relative">
-                {hourEvents.map(event => (
-                  <div
-                    key={event.id}
-                    className="absolute left-0 right-0 px-2 py-1 text-xs rounded text-white truncate"
-                    style={{ backgroundColor: event.color || '#00F5FF', top: '2px' }}
-                  >
-                    {event.title}
-                  </div>
-                ))}
-              </div>
+              {event.title}
             </div>
-          );
-        })}
+          ))
+        )}
       </div>
     </div>
   );
