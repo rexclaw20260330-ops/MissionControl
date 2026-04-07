@@ -668,10 +668,11 @@ export default function Missionboard() {
   // Edit mission
   const handleEditMission = async (id: string, updates: Partial<Mission>) => {
     try {
-      // Convert null description to undefined to match MissionUpdate type
+      // Convert null values to undefined to match MissionUpdate type
       const sanitizedUpdates: MissionUpdate = {
         ...updates,
         description: updates.description === null ? undefined : updates.description,
+        deadline: updates.deadline === null ? undefined : updates.deadline,
       };
       await updateMission(id, sanitizedUpdates);
       fetchMissions();
