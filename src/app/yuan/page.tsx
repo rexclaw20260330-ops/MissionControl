@@ -194,9 +194,6 @@ const DayView = ({ date, events, onTimeSlotClick }: { date: Date; events: Calend
 
   return (
     <div className="space-y-2">
-      <div className="text-center text-[#00F5FF] font-bold text-lg mb-4">
-        {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-      </div>
       <div className="space-y-2 max-h-[400px] overflow-y-auto px-2">
         {dayEvents.length === 0 ? (
           <p className="text-[#8a8a95] text-center py-8">No events for this day</p>
@@ -986,33 +983,29 @@ export default function YuanPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-[#8a8a95] mb-1">Start Time</label>
+                  <label className="block text-sm text-[#8a8a95] mb-1">Date</label>
                   <input
-                    type="datetime-local"
-                    value={newEvent.start_time}
-                    onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })}
+                    type="date"
+                    value={newEvent.start_time ? newEvent.start_time.slice(0, 10) : ''}
+                    onChange={(e) => {
+                      const date = e.target.value;
+                      setNewEvent({ 
+                        ...newEvent, 
+                        start_time: date + 'T00:00',
+                        end_time: date + 'T23:59'
+                      });
+                    }}
                     className="w-full px-3 py-2 bg-[#0D1117] border border-[#00F5FF]/20 rounded-lg text-white focus:border-[#00F5FF] focus:outline-none"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-[#8a8a95] mb-1">End Time</label>
-                  <input
-                    type="datetime-local"
-                    value={newEvent.end_time}
-                    onChange={(e) => setNewEvent({ ...newEvent, end_time: e.target.value })}
+                  <label className="block text-sm text-[#8a8a95] mb-1">Category</label>
+                  <select
+                    value={newEvent.category}
+                    onChange={(e) => setNewEvent({ ...newEvent, category: e.target.value })}
                     className="w-full px-3 py-2 bg-[#0D1117] border border-[#00F5FF]/20 rounded-lg text-white focus:border-[#00F5FF] focus:outline-none"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm text-[#8a8a95] mb-1">Category</label>
-                <select
-                  value={newEvent.category}
-                  onChange={(e) => setNewEvent({ ...newEvent, category: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#0D1117] border border-[#00F5FF]/20 rounded-lg text-white focus:border-[#00F5FF] focus:outline-none"
-                >
+                  >
                   <option value="learning">📚 Learning</option>
                   <option value="work">💼 Work</option>
                   <option value="personal">👤 Personal</option>
