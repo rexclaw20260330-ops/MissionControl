@@ -31,6 +31,65 @@ const categoryColors: Record<string, string> = {
   other: '#f59e0b',
 };
 
+type CalendarView = 'month' | 'week';
+
+// Week View Component
+const WeekView = ({ date, events, onDayClick }: { date: Date; events: CalendarEvent[]; onDayClick?: (date: Date) => void }) => {
+  const startOfWeek = new Date(date);
+  startOfWeek.setDate(date.getDate() - date.getDay());
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(startOfWeek);
+    day.setDate(startOfWeek.getDate() + i);
+    return day;
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        {weekDays.map((day, i) => (
+          <div 
+            key={i} 
+            className={`flex-1 text-center p-2 rounded-lg cursor-pointer transition-colors ${
+              day.toDateString() === new Date().toDateString() ? 'bg-[#00F5FF]/20' : 'hover:bg-white/5'
+            }`}
+            onClick={() => onDayClick && onDayClick(day)}
+          >
+            <div className="text-xs text-[#8a8a95]">{day.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+            <div className={`font-bold ${day.toDateString() === new Date().toDateString() ? 'text-[#00F5FF]' : ''}`}>
+              {day.getDate()}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-2">
+        {weekDays.map((day, i) => {
+          const dayEvents = events.filter(event => {
+            const eventDate = new Date(event.start_time);
+            return eventDate.toDateString() === day.toDateString();
+          });
+          return (
+            <div 
+              key={i} 
+              className="min-h-[150px] bg-[#0D1117] rounded-lg p-2 space-y-1 cursor-pointer hover:bg-[#0D1117]/80 transition-colors"
+              onClick={() => onDayClick && onDayClick(day)}
+            >
+              {dayEvents.map(event => (
+                <div
+                  key={event.id}
+                  className="text-[10px] px-1 py-0.5 rounded text-white truncate"
+                  style={{ backgroundColor: event.color || '#00F5FF' }}
+                >
+                  {event.title}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 // Month View Component
 const MonthView = ({ date, events, onDayClick }: { date: Date; events: CalendarEvent[]; onDayClick?: (date: Date) => void }) => {
   const year = date.getFullYear();
@@ -98,6 +157,7 @@ export default function YuanPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [calendarView, setCalendarView] = useState<CalendarView>('month');
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -125,9 +185,13 @@ export default function YuanPage() {
     }
   };
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
+  const navigateDate = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    if (calendarView === 'week') {
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
+    } else {
+      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    }
     setCurrentDate(newDate);
   };
 
@@ -218,13 +282,30 @@ export default function YuanPage() {
               
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => navigateMonth('prev')}
+                  onClick={() => navigateDate('prev')}
                   className="p-2 hover:bg-white/5 rounded-lg transition-colors"
                 >
                   <ChevronLeft size={20} />
                 </button>
+                
+                <div className="flex bg-[#0D1117] rounded-lg p-1">
+                  {(['month', 'week'] as const).map((view) => (
+                    <button
+                      key={view}
+                      onClick={() => setCalendarView(view)}
+                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        calendarView === view
+                          ? 'bg-[#00F5FF] text-black'
+                          : 'text-[#8a8a95] hover:text-white'
+                      }`}
+                    >
+                      {view.charAt(0).toUpperCase() + view.slice(1)}
+                    </button>
+                  ))}
+                </div>
+                
                 <button
-                  onClick={() => navigateMonth('next')}
+                  onClick={() => navigateDate('next')}
                   className="p-2 hover:bg-white/5 rounded-lg transition-colors"
                 >
                   <ChevronRight size={20} />
@@ -239,7 +320,9 @@ export default function YuanPage() {
               </div>
             </div>
 
-            <MonthView date={currentDate} events={events} onDayClick={openEventModal} />
+            {/* Calendar Content */}
+            {calendarView === 'month' && <MonthView date={currentDate} events={events} onDayClick={openEventModal} />}
+            {calendarView === 'week' && <WeekView date={currentDate} events={events} onDayClick={openEventModal} />}
           </div>
         </div>
       </main>
