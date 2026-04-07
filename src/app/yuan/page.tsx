@@ -50,39 +50,29 @@ interface CalendarEvent {
   description?: string;
   start_time: string;
   end_time: string;
-  color: string;
+  color?: string;
   category: string;
-  created_at: string;
 }
 
-type CalendarView = 'day' | 'week' | 'month';
-
-const formatStatValue = (stat: UserStat | undefined, suffix: string = '') => {
-  if (!stat) return 'Loading...';
-  const value = stat.stat_value;
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K${suffix}`;
-  return `${value}${suffix}`;
-};
-
-const formatStatChange = (stat: UserStat | undefined) => {
-  if (!stat) return '';
-  const change = stat.stat_change;
-  if (change === 0) return '';
-  if (change > 0) return `+${change}`;
-  return `${change}`;
-};
-
-// Quotes array
+// Quotes data
 const quotes = [
   { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+  { text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs" },
   { text: "Stay hungry, stay foolish.", author: "Steve Jobs" },
-  { text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
-  { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
-  { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
-  { text: "Knowledge is power.", author: "Francis Bacon" },
+  { text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" },
+  { text: "The people who are crazy enough to think they can change the world are the ones who do.", author: "Steve Jobs" },
 ];
 
-// Circular Progress Component
+// Category colors
+const categoryColors: Record<string, string> = {
+  learning: '#00F5FF',
+  work: '#0066ff',
+  personal: '#8b5cf6',
+  fitness: '#10b981',
+  other: '#f59e0b',
+};
+
+// Circular progress component
 const CircularProgress = ({ progress, size = 120, strokeWidth = 8 }: { progress: number; size?: number; strokeWidth?: number }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -112,75 +102,6 @@ const CircularProgress = ({ progress, size = 120, strokeWidth = 8 }: { progress:
           transition: 'stroke-dashoffset 0.5s ease-in-out',
         }}
       />
-    </svg>
-  );
-};
-
-// Hexagonal radar chart component
-const SkillsRadar = ({ skills }: { skills: UserSkill[] }) => {
-  const size = 200;
-  const center = size / 2;
-  const radius = 70;
-  const angleStep = (2 * Math.PI) / (skills.length || 6);
-
-  const getPoint = (index: number, level: number, maxLevel: number = 100) => {
-    const angle = index * angleStep - Math.PI / 2;
-    const r = (level / maxLevel) * radius;
-    return {
-      x: center + r * Math.cos(angle),
-      y: center + r * Math.sin(angle),
-    };
-  };
-
-  if (skills.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-[200px] text-[#8a8a95]">
-        No skills tracked yet
-      </div>
-    );
-  }
-
-  const skillPoints = skills.map((skill, i) => getPoint(i, skill.level, skill.max_level));
-  const polygonPoints = skillPoints.map((p) => `${p.x},${p.y}`).join(" ");
-
-  return (
-    <svg width={size} height={size} className="mx-auto">
-      {[20, 40, 60, 80, 100].map((level) => {
-        const points = skills.map((_, i) => getPoint(i, level, 100));
-        const pointStr = points.map((p) => `${p.x},${p.y}`).join(" ");
-        return (
-          <polygon
-            key={level}
-            points={pointStr}
-            fill="none"
-            stroke="#3D3D3D"
-            strokeWidth="1"
-          />
-        );
-      })}
-      <polygon
-        points={polygonPoints}
-        fill="rgba(0, 245, 255, 0.2)"
-        stroke="#00F5FF"
-        strokeWidth="2"
-      />
-      {skills.map((skill, i) => {
-        const point = skillPoints[i];
-        return (
-          <g key={skill.id}>
-            <circle cx={point.x} cy={point.y} r="4" fill="#00F5FF" />
-            <text
-              x={point.x}
-              y={point.y - 10}
-              textAnchor="middle"
-              fill="#FFF8E7"
-              fontSize="10"
-            >
-              {skill.skill_name}
-            </text>
-          </g>
-        );
-      })}
     </svg>
   );
 };
@@ -294,6 +215,7 @@ const MonthView = ({ date, events, onDayClick }: { date: Date; events: CalendarE
         {days.map(day => {
           const density = getEventDensity(day);
           const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+
           return (
             <div
               key={day}
@@ -322,6 +244,8 @@ const MonthView = ({ date, events, onDayClick }: { date: Date; events: CalendarE
   );
 };
 
+type CalendarView = 'day' | 'week' | 'month';
+
 export default function YuanPage() {
   const [goals, setGoals] = useState<UserGoal[]>([]);
   const [skills, setSkills] = useState<UserSkill[]>([]);
@@ -348,22 +272,14 @@ export default function YuanPage() {
     user_id: "yuan"
   });
 
-  // Category color mapping
-  const categoryColors: Record<string, string> = {
-    learning: "#10B981",
-    work: "#0066ff",
-    personal: "#F59E0B",
-    fitness: "#EF4444",
-    other: "#8B5CF6"
-  };
-
-  // Real data from database
+  // Learning stats
   const [streak, setStreak] = useState<LearningStreak | null>(null);
   const [todayProgress, setTodayProgress] = useState({ percent: 0, minutes: 0, items: 0 });
   const [weeklyHours, setWeeklyHours] = useState(0);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [weeklyTasks, setWeeklyTasks] = useState(0);
 
+  // Load data on mount
   useEffect(() => {
     loadData();
     // Set a random quote
@@ -434,15 +350,6 @@ export default function YuanPage() {
     }
   };
 
-  const handleProgressUpdate = async (id: string, progress: number) => {
-    try {
-      await updateGoalProgress(id, progress);
-      await loadData();
-    } catch (err) {
-      console.error("Failed to update progress:", err);
-    }
-  };
-
   const handleCreateSkill = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSkill.skill_name) return;
@@ -471,7 +378,7 @@ export default function YuanPage() {
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEvent.title || !newEvent.start_time || !newEvent.end_time) return;
+    if (!newEvent.title) return;
 
     try {
       const eventData = {
@@ -502,18 +409,14 @@ export default function YuanPage() {
     }
   };
 
-  const openEventModal = (date?: Date, hour?: number) => {
+  const openEventModal = (date?: Date) => {
     const now = date || new Date();
-    const startHour = hour !== undefined ? hour : now.getHours();
-    const startTime = new Date(now);
-    startTime.setHours(startHour, 0, 0, 0);
-    const endTime = new Date(startTime);
-    endTime.setHours(startHour + 1);
+    const today = now.toISOString().slice(0, 10);
 
     setNewEvent({
       ...newEvent,
-      start_time: startTime.toISOString().slice(0, 16),
-      end_time: endTime.toISOString().slice(0, 16)
+      start_time: today + 'T00:00',
+      end_time: today + 'T23:59'
     });
     setIsEventModalOpen(true);
   };
@@ -534,7 +437,7 @@ export default function YuanPage() {
       <div className="min-h-screen bg-[#0D1117] text-white p-6 flex items-center justify-center">
         <div className="text-center">
           <p className="text-rose-400 mb-2">Error: {error}</p>
-          <button
+          <button 
             onClick={loadData}
             className="px-4 py-2 bg-[#00F5FF] text-black rounded-lg hover:bg-[#00D9E6] transition-colors"
           >
@@ -548,11 +451,11 @@ export default function YuanPage() {
   return (
     <div className="min-h-screen bg-[#0D1117] text-white">
       {/* Header */}
-      <header className="p-6 border-b border-[#00F5FF]/20">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-[#161B22] rounded-xl border border-[#00F5FF]/30">
-              <Crown className="text-[#00F5FF]" size={24} />
+      <header className="px-6 py-4 border-b border-[#00F5FF]/20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00F5FF] to-[#0066ff] flex items-center justify-center">
+              <Crown className="text-white" size={20} />
             </div>
             <div>
               <h1 className="text-2xl font-black tracking-tight">Yuan&apos;s Sanctum</h1>
@@ -657,30 +560,34 @@ export default function YuanPage() {
                 </div>
               </div>
 
-              {/* Streak */}
+              {/* Study Streak */}
               <div className="bg-[#161B22] border border-[#00F5FF]/20 rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Flame className="text-orange-500" size={20} />
+                  <Flame className="text-[#00F5FF]" size={20} />
                   <h3 className="font-bold">Study Streak</h3>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="text-6xl font-black text-orange-500">{streak?.current_streak || 0}</div>
-                  <div className="space-y-1">
-                    <p className="text-lg font-semibold">Day Streak</p>
-                    <p className="text-sm text-[#8a8a95]">Longest: {streak?.longest_streak || 0}</p>
-                    <div className="flex gap-1 mt-2">
-                      {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-                        <div
-                          key={day + i}
-                          className={`w-6 h-6 rounded flex items-center justify-center text-[10px] ${
-                            i < (streak?.current_streak || 0) % 7 ? 'bg-orange-500/20 text-orange-400' : 'bg-[#0D1117] text-[#8a8a95]'
-                          }`}
-                        >
-                          ✓
-                        </div>
-                      ))}
-                    </div>
+                  <div className="text-4xl font-black text-[#00F5FF]">
+                    {streak?.current_streak || 0}
                   </div>
+                  <div>
+                    <p className="text-sm text-[#8a8a95]">Day Streak</p>
+                    <p className="text-xs text-[#8a8a95]">Longest: {streak?.longest_streak || 0}</p>
+                  </div>
+                </div>
+                <div className="flex gap-1 mt-4">
+                  {Array.from({ length: 7 }, (_, i) => (
+                    <div
+                      key={i}
+                      className={`flex-1 h-8 rounded-lg flex items-center justify-center text-xs ${
+                        i < (streak?.current_streak || 0) % 7
+                          ? 'bg-[#00F5FF] text-black font-bold'
+                          : 'bg-[#0D1117] text-[#8a8a95]'
+                      }`}
+                    >
+                      {i < (streak?.current_streak || 0) % 7 ? '✓' : ''}
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -776,8 +683,16 @@ export default function YuanPage() {
                         min="0"
                         max="100"
                         value={goal.progress}
-                        onChange={(e) => handleProgressUpdate(goal.id, parseInt(e.target.value))}
-                        className="w-full h-1 bg-[#0D1117] rounded-lg appearance-none cursor-pointer mt-2 accent-[#00F5FF]"
+                        onChange={async (e) => {
+                          const newProgress = parseInt(e.target.value);
+                          try {
+                            await updateGoalProgress(goal.id, newProgress);
+                            setGoals(goals.map(g => g.id === goal.id ? { ...g, progress: newProgress } : g));
+                          } catch (err) {
+                            console.error("Failed to update progress:", err);
+                          }
+                        }}
+                        className="w-full h-1 bg-transparent cursor-pointer accent-[#00F5FF]"
                       />
                     </div>
                   ))
@@ -789,7 +704,7 @@ export default function YuanPage() {
             <div className="bg-[#161B22] border border-[#00F5FF]/20 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Activity className="text-[#00F5FF]" size={20} />
+                  <Zap className="text-[#00F5FF]" size={20} />
                   <h2 className="text-lg font-bold">Skills Radar</h2>
                 </div>
                 <button
@@ -800,40 +715,81 @@ export default function YuanPage() {
                 </button>
               </div>
 
-              <SkillsRadar skills={skills} />
+              <div className="space-y-3">
+                {skills.length === 0 ? (
+                  <p className="text-[#8a8a95] text-center py-4">No skills tracked yet</p>
+                ) : (
+                  skills.map((skill) => (
+                    <div key={skill.id} className="flex items-center gap-3">
+                      <span className="flex-1 text-sm font-medium truncate">{skill.skill_name}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 h-2 bg-[#0D1117] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#00F5FF] to-[#0066ff] rounded-full transition-all duration-500"
+                            style={{ width: `${skill.level}%` }}
+                          />
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={skill.level}
+                          onChange={async (e) => {
+                            const newLevel = parseInt(e.target.value) || 0;
+                            try {
+                              await updateSkillLevel(skill.id, newLevel);
+                              setSkills(skills.map(s => s.id === skill.id ? { ...s, level: newLevel } : s));
+                            } catch (err) {
+                              console.error("Failed to update skill:", err);
+                            }
+                          }}
+                          className="w-14 px-2 py-1 bg-[#0D1117] border border-[#00F5FF]/20 rounded text-sm text-center focus:border-[#00F5FF] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
-            {/* Quick Actions */}
+            {/* Quick Links */}
             <div className="bg-[#161B22] border border-[#00F5FF]/20 rounded-2xl p-6">
-              <h2 className="text-lg font-bold mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-2 gap-3">
+              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Activity className="text-[#00F5FF]" size={20} />
+                Quick Actions
+              </h2>
+              <div className="space-y-2">
                 <Link
                   href="/calendar"
-                  className="flex flex-col items-center gap-2 p-4 bg-[#0D1117] rounded-xl hover:bg-[#00F5FF]/10 transition-colors border border-transparent hover:border-[#00F5FF]/30"
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
                 >
-                  <CalendarIcon size={24} className="text-[#00F5FF]" />
-                  <span className="text-sm font-medium">Calendar</span>
+                  <CalendarIcon size={18} className="text-[#00F5FF]" />
+                  <span className="flex-1">Calendar</span>
+                  <ArrowRight size={14} className="text-[#8a8a95] group-hover:text-[#00F5FF] transition-colors" />
                 </Link>
                 <Link
                   href="/brain"
-                  className="flex flex-col items-center gap-2 p-4 bg-[#0D1117] rounded-xl hover:bg-[#00F5FF]/10 transition-colors border border-transparent hover:border-[#00F5FF]/30"
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
                 >
-                  <Brain size={24} className="text-[#00F5FF]" />
-                  <span className="text-sm font-medium">Second Brain</span>
+                  <Brain size={18} className="text-[#00F5FF]" />
+                  <span className="flex-1">Second Brain</span>
+                  <ArrowRight size={14} className="text-[#8a8a95] group-hover:text-[#00F5FF] transition-colors" />
                 </Link>
                 <Link
                   href="/tasks"
-                  className="flex flex-col items-center gap-2 p-4 bg-[#0D1117] rounded-xl hover:bg-[#00F5FF]/10 transition-colors border border-transparent hover:border-[#00F5FF]/30"
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
                 >
-                  <Target size={24} className="text-[#00F5FF]" />
-                  <span className="text-sm font-medium">Tasks</span>
+                  <ListTodo size={18} className="text-[#00F5FF]" />
+                  <span className="flex-1">Tasks</span>
+                  <ArrowRight size={14} className="text-[#8a8a95] group-hover:text-[#00F5FF] transition-colors" />
                 </Link>
                 <Link
                   href="/projects"
-                  className="flex flex-col items-center gap-2 p-4 bg-[#0D1117] rounded-xl hover:bg-[#00F5FF]/10 transition-colors border border-transparent hover:border-[#00F5FF]/30"
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
                 >
-                  <Zap size={24} className="text-[#00F5FF]" />
-                  <span className="text-sm font-medium">Projects</span>
+                  <Target size={18} className="text-[#00F5FF]" />
+                  <span className="flex-1">Projects</span>
+                  <ArrowRight size={14} className="text-[#8a8a95] group-hover:text-[#00F5FF] transition-colors" />
                 </Link>
               </div>
             </div>
@@ -1006,12 +962,13 @@ export default function YuanPage() {
                     onChange={(e) => setNewEvent({ ...newEvent, category: e.target.value })}
                     className="w-full px-3 py-2 bg-[#0D1117] border border-[#00F5FF]/20 rounded-lg text-white focus:border-[#00F5FF] focus:outline-none"
                   >
-                  <option value="learning">📚 Learning</option>
-                  <option value="work">💼 Work</option>
-                  <option value="personal">👤 Personal</option>
-                  <option value="fitness">💪 Fitness</option>
-                  <option value="other">📝 Other</option>
-                </select>
+                    <option value="learning">📚 Learning</option>
+                    <option value="work">💼 Work</option>
+                    <option value="personal">👤 Personal</option>
+                    <option value="fitness">💪 Fitness</option>
+                    <option value="other">📝 Other</option>
+                  </select>
+                </div>
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <button
