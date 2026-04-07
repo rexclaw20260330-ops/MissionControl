@@ -1,9 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { Calendar, Clock } from "lucide-react";
-import { getAgentSchedules } from "@/lib/db-actions";
-import { AgentSchedule, ScheduleType } from "@/lib/supabase-types";
+import { Calendar } from "lucide-react";
 
 type AgentId = "rex" | "mosa" | "bronto" | "tricera" | "pteroda";
 
@@ -15,26 +12,73 @@ interface Agent {
   color: string;
 }
 
-interface CalendarEvent {
+interface ScheduleEvent {
   id: string;
   title: string;
   agentId: AgentId;
-  day: number;
+  day: number; // 0-6 (Mon-Sun)
   startHour: number;
   endHour: number;
-  type: ScheduleType;
+  type: "focus" | "meeting" | "planning" | "break";
 }
 
 const agents: Agent[] = [
   { id: "rex", name: "Rex", emoji: "🦖", gradient: "from-[#0066ff] to-[#00ffff]", color: "#00F5FF" },
   { id: "tricera", name: "Tricera", emoji: "🦕", gradient: "from-purple-500 to-pink-500", color: "#A855F7" },
   { id: "pteroda", name: "Pteroda", emoji: "🦅", gradient: "from-amber-500 to-orange-500", color: "#F59E0B" },
-  { id: "bronto", name: "Bronto", emoji: "🦒", gradient: "from-emerald-500 to-teal-500", color: "#10B981" },
-  { id: "mosa", name: "Mosa", emoji: "🐊", gradient: "from-rose-500 to-red-500", color: "#F43F5E" },
+  { id: "bronto", name: "Bronto", emoji: "🦴", gradient: "from-emerald-500 to-teal-500", color: "#10B981" },
+  { id: "mosa", name: "Mosa", emoji: "🧩", gradient: "from-rose-500 to-red-500", color: "#F43F5E" },
 ];
 
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const hours = Array.from({ length: 14 }, (_, i) => i + 8);
+
+// Hardcoded schedules (written in code, no database needed)
+const hardcodedSchedules: ScheduleEvent[] = [
+  // Rex - Monday
+  { id: "rex-mon-focus", title: "Deep Work", agentId: "rex", day: 0, startHour: 9, endHour: 12, type: "focus" },
+  { id: "rex-mon-plan", title: "Sprint Planning", agentId: "rex", day: 0, startHour: 14, endHour: 15, type: "planning" },
+  
+  // Rex - Tuesday
+  { id: "rex-tue-focus", title: "Code Review", agentId: "rex", day: 1, startHour: 10, endHour: 12, type: "focus" },
+  { id: "rex-tue-meet", title: "Team Sync", agentId: "rex", day: 1, startHour: 14, endHour: 15, type: "meeting" },
+  
+  // Rex - Wednesday
+  { id: "rex-wed-focus", title: "Architecture", agentId: "rex", day: 2, startHour: 9, endHour: 11, type: "focus" },
+  
+  // Rex - Thursday
+  { id: "rex-thu-focus", title: "Feature Dev", agentId: "rex", day: 3, startHour: 9, endHour: 13, type: "focus" },
+  
+  // Rex - Friday
+  { id: "rex-fri-wrap", title: "Week Wrap", agentId: "rex", day: 4, startHour: 15, endHour: 17, type: "planning" },
+  
+  // Mosa - Daily Standups
+  { id: "mosa-mon-standup", title: "Standup", agentId: "mosa", day: 0, startHour: 9, endHour: 9.5, type: "meeting" },
+  { id: "mosa-tue-standup", title: "Standup", agentId: "mosa", day: 1, startHour: 9, endHour: 9.5, type: "meeting" },
+  { id: "mosa-wed-standup", title: "Standup", agentId: "mosa", day: 2, startHour: 9, endHour: 9.5, type: "meeting" },
+  { id: "mosa-thu-standup", title: "Standup", agentId: "mosa", day: 3, startHour: 9, endHour: 9.5, type: "meeting" },
+  { id: "mosa-fri-standup", title: "Standup", agentId: "mosa", day: 4, startHour: 9, endHour: 9.5, type: "meeting" },
+  
+  // Mosa - Coding blocks
+  { id: "mosa-tue-code", title: "Feature Coding", agentId: "mosa", day: 1, startHour: 10, endHour: 18, type: "focus" },
+  { id: "mosa-wed-code", title: "Feature Coding", agentId: "mosa", day: 2, startHour: 10, endHour: 18, type: "focus" },
+  { id: "mosa-thu-code", title: "Feature Coding", agentId: "mosa", day: 3, startHour: 10, endHour: 18, type: "focus" },
+  
+  // Tricera - Design sessions
+  { id: "tricera-tue-design", title: "UI Design", agentId: "tricera", day: 1, startHour: 10, endHour: 14, type: "focus" },
+  { id: "tricera-thu-design", title: "UI Design", agentId: "tricera", day: 3, startHour: 10, endHour: 14, type: "focus" },
+  
+  // Pteroda - Daily Crypto Analysis
+  { id: "pteroda-daily-crypto", title: "Crypto Analysis", agentId: "pteroda", day: 0, startHour: 9, endHour: 10, type: "focus" },
+  { id: "pteroda-daily-crypto2", title: "Crypto Analysis", agentId: "pteroda", day: 1, startHour: 9, endHour: 10, type: "focus" },
+  { id: "pteroda-daily-crypto3", title: "Crypto Analysis", agentId: "pteroda", day: 2, startHour: 9, endHour: 10, type: "focus" },
+  { id: "pteroda-daily-crypto4", title: "Crypto Analysis", agentId: "pteroda", day: 3, startHour: 9, endHour: 10, type: "focus" },
+  { id: "pteroda-daily-crypto5", title: "Crypto Analysis", agentId: "pteroda", day: 4, startHour: 9, endHour: 10, type: "focus" },
+  
+  // Bronto - QA sessions
+  { id: "bronto-tue-qa", title: "Code QA", agentId: "bronto", day: 1, startHour: 14, endHour: 17, type: "focus" },
+  { id: "bronto-thu-qa", title: "Code QA", agentId: "bronto", day: 3, startHour: 14, endHour: 17, type: "focus" },
+  { id: "bronto-fri-qa", title: "Weekly Review", agentId: "bronto", day: 4, startHour: 10, endHour: 12, type: "planning" },
+];
 
 const getEventTypeStyle = (type: string) => {
   switch (type) {
@@ -61,46 +105,7 @@ const getEventTypeLabel = (type: string) => {
   }
 };
 
-// Map agent_id from database to AgentId type
-const mapAgentId = (agentId: string): AgentId => {
-  const validAgents: AgentId[] = ["rex", "mosa", "bronto", "tricera", "pteroda"];
-  return validAgents.includes(agentId as AgentId) ? (agentId as AgentId) : "rex";
-};
-
-// Convert database schedule to calendar event
-const mapScheduleToEvent = (schedule: AgentSchedule): CalendarEvent => ({
-  id: schedule.id,
-  title: schedule.title,
-  agentId: mapAgentId(schedule.agent_id),
-  day: schedule.day_of_week,
-  startHour: schedule.start_hour,
-  endHour: schedule.end_hour,
-  type: schedule.type || "focus",
-});
-
 export default function DinoCalendar() {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch schedules on mount
-  useEffect(() => {
-    fetchSchedules();
-  }, []);
-
-  const fetchSchedules = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const schedules = await getAgentSchedules();
-      setEvents(schedules.map(mapScheduleToEvent));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load schedules");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const today = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
 
   return (
@@ -113,90 +118,72 @@ export default function DinoCalendar() {
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight">Dino Calendar</h1>
-            <p className="text-[#8a8a95]">Agent schedules & cron jobs</p>
+            <p className="text-[#8a8a95]">Agent schedules &amp; cron jobs (hardcoded)</p>
           </div>
         </div>
       </div>
 
-      {/* Loading / Error */}
-      {loading && (
-        <div className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-8 h-8 border-2 border-[#00F5FF] border-t-transparent rounded-full animate-spin" />
-            <p className="text-[#8a8a95]">Loading schedules...</p>
-          </div>
-        </div>
-      )}
-      
-      {error && (
-        <div className="mb-6 p-4 rounded-lg bg-rose-500/20 border border-rose-500/30">
-          <p className="text-rose-200">{error}</p>
-        </div>
-      )}
-
       {/* Calendar Grid */}
-      {!loading && !error && (
-        <div className="bg-[#161B22] border border-white/10 rounded-2xl overflow-hidden">
-          {/* Header Row */}
-          <div className="grid grid-cols-8 border-b border-white/10">
-            <div className="p-4 border-r border-white/10" /> {/* Time column */}
-            {weekDays.map((day, i) => (
-              <div
-                key={day}
-                className={`p-4 text-center font-semibold ${
-                  i === today ? "bg-[#0066ff]/20 text-[#00F5FF]" : "text-[#8a8a95]"
-                }`}
-              >
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Agent Rows */}
-          {agents.map((agent) => (
-            <div key={agent.id} className="grid grid-cols-8 border-b border-white/10 last:border-b-0">
-              {/* Agent Label */}
-              <div className="p-4 border-r border-white/10 flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${agent.gradient} flex items-center justify-center text-lg`}>
-                  {agent.emoji}
-                </div>
-                <span className="font-medium text-sm">{agent.name}</span>
-              </div>
-
-              {/* Days */}
-              {weekDays.map((_, dayIndex) => {
-                const dayEvents = events.filter(
-                  (e) => e.agentId === agent.id && e.day === dayIndex
-                );
-
-                return (
-                  <div
-                    key={dayIndex}
-                    className={`p-2 border-r border-white/10 last:border-r-0 min-h-[100px] ${
-                      dayIndex === today ? "bg-[#0066ff]/5" : ""
-                    }`}
-                  >
-                    {dayEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className={`mb-2 p-2 rounded-lg border text-xs ${getEventTypeStyle(event.type)}`}
-                      >
-                        <p className="font-medium text-white truncate">{event.title}</p>
-                        <p className="text-white/70">
-                          {Math.floor(event.startHour)}:{(event.startHour % 1) * 60 === 0 ? '00' : '30'} - {Math.floor(event.endHour)}:{(event.endHour % 1) * 60 === 0 ? '00' : '30'}
-                        </p>
-                        <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-black/30 text-white/80 text-[10px]">
-                          {getEventTypeLabel(event.type)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
+      <div className="bg-[#161B22] border border-white/10 rounded-2xl overflow-hidden">
+        {/* Header Row */}
+        <div className="grid grid-cols-8 border-b border-white/10">
+          <div className="p-4 border-r border-white/10" />
+          {weekDays.map((day, i) => (
+            <div
+              key={day}
+              className={`p-4 text-center font-semibold ${
+                i === today ? "bg-[#0066ff]/20 text-[#00F5FF]" : "text-[#8a8a95]"
+              }`}
+            >
+              {day}
             </div>
           ))}
         </div>
-      )}
+
+        {/* Agent Rows */}
+        {agents.map((agent) => (
+          <div key={agent.id} className="grid grid-cols-8 border-b border-white/10 last:border-b-0">
+            {/* Agent Label */}
+            <div className="p-4 border-r border-white/10 flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${agent.gradient} flex items-center justify-center text-lg`}>
+                {agent.emoji}
+              </div>
+              <span className="font-medium text-sm">{agent.name}</span>
+            </div>
+
+            {/* Days */}
+            {weekDays.map((_, dayIndex) => {
+              const dayEvents = hardcodedSchedules.filter(
+                (e) => e.agentId === agent.id && e.day === dayIndex
+              );
+
+              return (
+                <div
+                  key={dayIndex}
+                  className={`p-2 border-r border-white/10 last:border-r-0 min-h-[100px] ${
+                    dayIndex === today ? "bg-[#0066ff]/5" : ""
+                  }`}
+                >
+                  {dayEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className={`mb-2 p-2 rounded-lg border text-xs ${getEventTypeStyle(event.type)}`}
+                    >
+                      <p className="font-medium text-white truncate">{event.title}</p>
+                      <p className="text-white/70">
+                        {Math.floor(event.startHour)}:{(event.startHour % 1) * 60 === 0 ? '00' : '30'} - {Math.floor(event.endHour)}:{(event.endHour % 1) * 60 === 0 ? '00' : '30'}
+                      </p>
+                      <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-black/30 text-white/80 text-[10px]">
+                        {getEventTypeLabel(event.type)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
 
       {/* Legend */}
       <div className="mt-6 flex items-center gap-6">
