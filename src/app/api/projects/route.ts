@@ -1,84 +1,59 @@
 import { NextResponse } from 'next/server';
-import { getProjects, createProject, updateProject, deleteProject } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 
-// GET /api/projects - 取得所有專案
+// GET /api/projects - List all projects
 export async function GET() {
   try {
-    const projects = await getProjects();
-    return NextResponse.json({ success: true, projects });
+    const { data: projects, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return NextResponse.json({ projects: projects || [] });
   } catch (error) {
     console.error('Error fetching projects:', error);
     return NextResponse.json(
-      { success: false, error: String(error) },
+      { error: 'Failed to fetch projects' },
       { status: 500 }
     );
   }
 }
 
-// POST /api/projects - 建立新專案
+// POST /api/projects - Create new project
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const project = await createProject({
-      name: body.name,
-      description: body.description,
-      status: body.status || 'planning',
-      progress: body.progress || 0,
-      color: body.color || '#3b82f6'
-    });
-    return NextResponse.json({ success: true, project });
-  } catch (error) {
-    console.error('Error creating project:', error);
-    return NextResponse.json(
-      { success: false, error: String(error) },
-      { status: 500 }
-    );
-  }
-}
+    const { name, description, status, progress, deadline, user_id } = body;
 
-// PUT /api/projects - 更新專案
-export async function PUT(request: Request) {
-  try {
-    const body = await request.json();
-    const { id, ...updates } = body;
-    
-    const mappedUpdates: any = {};
-    if (updates.name !== undefined) mappedUpdates.name = updates.name;
-    if (updates.description !== undefined) mappedUpdates.description = updates.description;
-    if (updates.status !== undefined) mappedUpdates.status = updates.status;
-    if (updates.progress !== undefined) mappedUpdates.progress = updates.progress;
-    if (updates.color !== undefined) mappedUpdates.color = updates.color;
-    
-    const project = await updateProject(id, mappedUpdates);
-    return NextResponse.json({ success: true, project });
-  } catch (error) {
-    console.error('Error updating project:', error);
-    return NextResponse.json(
-      { success: false, error: String(error) },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE /api/projects - 刪除專案
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    
-    if (!id) {
+    if (!name) {
       return NextResponse.json(
-        { success: false, error: 'Missing project ID' },
+        { error: 'Project name is required' },
         { status: 400 }
       );
     }
-    
-    await deleteProject(id);
-    return NextResponse.json({ success: true });
+
+    const { data: project, error } = await supabase
+      .from('projects')
+      .insert({
+        name,
+        description: description || '',
+        status: status || 'planning',
+        progress: progress || 0,
+        deadline: deadline || null,
+        user_id: user_id || 'yuan'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ project });
   } catch (error) {
-    console.error('Error deleting project:', error);
+    console.error('Error creating project:', error);
     return NextResponse.json(
-      { success: false, error: String(error) },
+      { error: 'Failed to create project' },
       { status: 500 }
     );
   }

@@ -429,3 +429,68 @@ export async function getRecentlyCompletedTasks(userId: string = 'yuan', limit: 
   if (error) throw error;
   return data as Task[];
 }
+
+// Projects
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  status: 'planning' | 'in_progress' | 'review' | 'done';
+  progress: number;
+  deadline: string | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectInsert {
+  name: string;
+  description?: string;
+  status?: 'planning' | 'in_progress' | 'review' | 'done';
+  progress?: number;
+  deadline?: string | null;
+  user_id?: string;
+}
+
+export async function getProjects(userId: string = 'yuan'): Promise<Project[]> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data as Project[];
+}
+
+export async function createProject(project: ProjectInsert): Promise<Project> {
+  const { data, error } = await supabase
+    .from('projects')
+    .insert(project)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data as Project;
+}
+
+export async function updateProject(id: string, updates: Partial<ProjectInsert>): Promise<Project> {
+  const { data, error } = await supabase
+    .from('projects')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data as Project;
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
+}
