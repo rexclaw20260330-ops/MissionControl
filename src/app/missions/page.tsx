@@ -671,6 +671,7 @@ export default function Missionboard() {
       // Convert null values to undefined to match MissionUpdate type
       const sanitizedUpdates: MissionUpdate = {
         ...updates,
+        status: updates.status,
         description: updates.description === null ? undefined : updates.description,
         deadline: updates.deadline === null ? undefined : updates.deadline,
       };
