@@ -28,7 +28,7 @@ export default function ProjectsPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    status: 'planning' as const,
+    status: 'planning' as 'planning' | 'in_progress' | 'review' | 'done',
     progress: 0,
     deadline: '',
   });
@@ -119,7 +119,7 @@ export default function ProjectsPage() {
     setFormData({
       name: project.name,
       description: project.description,
-      status: project.status,
+      status: project.status as 'planning' | 'in_progress' | 'review' | 'done',
       progress: project.progress,
       deadline: project.deadline ? project.deadline.slice(0, 10) : '',
     });
