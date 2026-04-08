@@ -668,13 +668,18 @@ export default function Missionboard() {
   // Edit mission
   const handleEditMission = async (id: string, updates: Partial<Mission>) => {
     try {
-      // Convert null values to undefined to match MissionUpdate type
-      const sanitizedUpdates: MissionUpdate = {
-        ...updates,
-        status: updates.status,
-        description: updates.description === null ? undefined : updates.description,
-        deadline: updates.deadline === null ? undefined : updates.deadline,
-      };
+      // Build sanitized updates - explicitly include all fields to ensure they're passed
+      const sanitizedUpdates: MissionUpdate = {};
+      
+      if (updates.name !== undefined) sanitizedUpdates.name = updates.name;
+      if (updates.description !== undefined && updates.description !== null) sanitizedUpdates.description = updates.description;
+      if (updates.responsible_agent !== undefined) sanitizedUpdates.responsible_agent = updates.responsible_agent;
+      if (updates.participating_agents !== undefined) sanitizedUpdates.participating_agents = updates.participating_agents;
+      if (updates.status !== undefined) sanitizedUpdates.status = updates.status;
+      if (updates.progress !== undefined) sanitizedUpdates.progress = updates.progress;
+      if (updates.priority !== undefined) sanitizedUpdates.priority = updates.priority;
+      if (updates.deadline !== undefined && updates.deadline !== null) sanitizedUpdates.deadline = updates.deadline;
+      
       await updateMission(id, sanitizedUpdates);
       fetchMissions();
     } catch (err: any) {
