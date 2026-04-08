@@ -1,6 +1,6 @@
 import { DashboardStats } from "@/components/DashboardStats";
 import Link from "next/link";
-import { Target, Calendar, Users } from "lucide-react";
+import { Target, Calendar, Users, Building2 } from "lucide-react";
 
 export default function Home() {
   const quickLinks = [
@@ -9,6 +9,12 @@ export default function Home() {
       href: "/projects", 
       icon: Target,
       desc: "Track your project progress"
+    },
+    { 
+      title: "Office", 
+      href: "/office", 
+      icon: Building2,
+      desc: "Jurassic Office - Agent workspace"
     },
     { 
       title: "Calendar", 
