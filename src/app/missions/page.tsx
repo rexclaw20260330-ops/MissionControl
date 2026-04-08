@@ -427,7 +427,11 @@ function EditMissionModal({ isOpen, onClose, onSubmit, mission }: EditMissionMod
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(mission.id, {
+    
+    // Debug: Log formData before submit
+    console.log('Submitting formData:', formData);
+    
+    const updates = {
       name: formData.name,
       description: formData.description,
       responsible_agent: formData.responsibleAgent,
@@ -436,7 +440,11 @@ function EditMissionModal({ isOpen, onClose, onSubmit, mission }: EditMissionMod
       progress: formData.progress,
       priority: formData.priority,
       deadline: formData.deadline || undefined,
-    });
+    };
+    
+    console.log('Sending updates:', updates);
+    
+    onSubmit(mission.id, updates);
     onClose();
   };
 
@@ -668,6 +676,8 @@ export default function Missionboard() {
   // Edit mission
   const handleEditMission = async (id: string, updates: Partial<Mission>) => {
     try {
+      console.log('Received updates in handleEditMission:', updates);
+      
       // Build sanitized updates - explicitly include all fields to ensure they're passed
       const sanitizedUpdates: MissionUpdate = {};
       
@@ -680,9 +690,12 @@ export default function Missionboard() {
       if (updates.priority !== undefined) sanitizedUpdates.priority = updates.priority;
       if (updates.deadline !== undefined && updates.deadline !== null) sanitizedUpdates.deadline = updates.deadline;
       
+      console.log('Sanitized updates to send:', sanitizedUpdates);
+      
       await updateMission(id, sanitizedUpdates);
       fetchMissions();
     } catch (err: any) {
+      console.error('Update mission error:', err);
       setError(err.message || "Failed to update mission. Please try again.");
     }
   };
