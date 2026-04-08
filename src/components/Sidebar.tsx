@@ -10,6 +10,7 @@ import {
   FolderKanban,
   Users,
   Building2,
+  Calendar,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const navItems = [
   { name: "Missions", href: "/missions", icon: Target },
   { name: "Team", href: "/team", icon: Users },
   { name: "Office", href: "/office", icon: Building2 },
+  { name: "Office Calendar", href: "/office/calendar", icon: Calendar },
   { name: "Yuan", href: "/yuan", icon: Crown },
 ];
 

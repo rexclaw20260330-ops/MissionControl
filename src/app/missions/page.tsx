@@ -411,18 +411,19 @@ function EditMissionModal({ isOpen, onClose, onSubmit, mission }: EditMissionMod
 
   useEffect(() => {
     if (mission) {
+      console.log('Mission data loaded:', mission);
       setFormData({
-        name: mission.name,
-        description: mission.description,
-        responsibleAgent: mission.responsibleAgent,
-        participatingAgents: mission.participatingAgents,
-        status: mission.status,
-        progress: mission.progress,
-        priority: mission.priority,
+        name: mission.name || "",
+        description: mission.description || "",
+        responsibleAgent: mission.responsibleAgent || "rex",
+        participatingAgents: mission.participatingAgents || [],
+        status: mission.status || "planning",
+        progress: typeof mission.progress === 'number' ? mission.progress : 0,
+        priority: mission.priority || "medium",
         deadline: mission.deadline || "",
       });
     }
-  }, [mission, isOpen]);
+  }, [mission]);
 
   if (!isOpen || !mission) return null;
 
