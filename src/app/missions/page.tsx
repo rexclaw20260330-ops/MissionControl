@@ -835,19 +835,6 @@ export default function Missionboard() {
                         {status.label}
                       </div>
                       <div className="flex items-center gap-2">
-                        {/* Edit Button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedProject(project);
-                            setIsEditModalOpen(true);
-                          }}
-                          className="p-2 bg-[#1e1e2a] text-[#00F5FF] rounded-lg hover:bg-[#00F5FF]/20 border border-[#00F5FF]/30 transition-colors"
-                          title="Edit mission"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        
                         {/* Priority Badge - Clickable */}
                         <button
                           onClick={(e) => {
