@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Target, Users, ChevronRight, X, Rocket, Code, Palette, Search, Brain, Plus, Loader2, AlertCircle, Trash2, Pencil } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { getMissions, createMission, updateMission, updateMissionProgress, deleteMission, Mission, MissionInsert, MissionUpdate } from "@/lib/db-actions";
 
 type AgentId = "rex" | "mosa" | "bronto" | "tricera" | "pteroda";
@@ -672,14 +673,37 @@ export default function Missionboard() {
   };
 
   // Edit mission
-  const handleEditMission = async (id: string, updates: Partial<Mission>) => {
+  const handleEditMission = async (id: string, updates: any) => {
     try {
-      console.log('Raw updates received:', JSON.stringify(updates, null, 2));
+      console.log('Updates received:', updates);
       
-      // Direct update - pass exactly what we received
-      const result = await updateMission(id, updates as MissionUpdate);
-      console.log('Update successful, result:', result);
+      // Ensure status and priority are included if they exist
+      const missionUpdate: any = {};
       
+      if ('name' in updates) missionUpdate.name = updates.name;
+      if ('description' in updates) missionUpdate.description = updates.description;
+      if ('responsible_agent' in updates) missionUpdate.responsible_agent = updates.responsible_agent;
+      if ('participating_agents' in updates) missionUpdate.participating_agents = updates.participating_agents;
+      if ('status' in updates) missionUpdate.status = updates.status;
+      if ('progress' in updates) missionUpdate.progress = updates.progress;
+      if ('priority' in updates) missionUpdate.priority = updates.priority;
+      if ('deadline' in updates) missionUpdate.deadline = updates.deadline;
+      
+      console.log('Sending to Supabase:', missionUpdate);
+      
+      const { data, error } = await supabase
+        .from('missions')
+        .update(missionUpdate)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Update result:', data);
       fetchMissions();
     } catch (err: any) {
       console.error('Update mission error:', err);
