@@ -428,21 +428,19 @@ function EditMissionModal({ isOpen, onClose, onSubmit, mission }: EditMissionMod
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Debug: Log formData before submit
-    console.log('Submitting formData:', formData);
-    
     const updates = {
       name: formData.name,
-      description: formData.description,
+      description: formData.description || null,
       responsible_agent: formData.responsibleAgent,
       participating_agents: formData.participatingAgents,
       status: formData.status,
       progress: formData.progress,
       priority: formData.priority,
-      deadline: formData.deadline || undefined,
+      deadline: formData.deadline || null,
     };
     
-    console.log('Sending updates:', updates);
+    console.log('Form data before submit:', formData);
+    console.log('Submitting updates:', JSON.stringify(updates, null, 2));
     
     onSubmit(mission.id, updates);
     onClose();
@@ -676,26 +674,11 @@ export default function Missionboard() {
   // Edit mission
   const handleEditMission = async (id: string, updates: Partial<Mission>) => {
     try {
-      console.log('Received updates in handleEditMission:', updates);
-      console.log('Updates keys:', Object.keys(updates));
-      console.log('Status value:', updates.status);
-      console.log('Priority value:', updates.priority);
+      console.log('Raw updates received:', JSON.stringify(updates, null, 2));
       
-      // Directly pass updates to updateMission - let Supabase handle validation
-      // Filter out null values but keep all defined values including status and priority
-      const sanitizedUpdates: any = {};
-      
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          sanitizedUpdates[key] = value;
-        }
-      });
-      
-      console.log('Sanitized updates to send:', sanitizedUpdates);
-      console.log('Sanitized keys:', Object.keys(sanitizedUpdates));
-      
-      const result = await updateMission(id, sanitizedUpdates);
-      console.log('Update result:', result);
+      // Direct update - pass exactly what we received
+      const result = await updateMission(id, updates as MissionUpdate);
+      console.log('Update successful, result:', result);
       
       fetchMissions();
     } catch (err: any) {
