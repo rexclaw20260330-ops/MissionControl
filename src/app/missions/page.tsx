@@ -677,22 +677,26 @@ export default function Missionboard() {
   const handleEditMission = async (id: string, updates: Partial<Mission>) => {
     try {
       console.log('Received updates in handleEditMission:', updates);
+      console.log('Updates keys:', Object.keys(updates));
+      console.log('Status value:', updates.status);
+      console.log('Priority value:', updates.priority);
       
-      // Build sanitized updates - explicitly include all fields to ensure they're passed
-      const sanitizedUpdates: MissionUpdate = {};
+      // Directly pass updates to updateMission - let Supabase handle validation
+      // Filter out null values but keep all defined values including status and priority
+      const sanitizedUpdates: any = {};
       
-      if (updates.name !== undefined) sanitizedUpdates.name = updates.name;
-      if (updates.description !== undefined && updates.description !== null) sanitizedUpdates.description = updates.description;
-      if (updates.responsible_agent !== undefined) sanitizedUpdates.responsible_agent = updates.responsible_agent;
-      if (updates.participating_agents !== undefined) sanitizedUpdates.participating_agents = updates.participating_agents;
-      if (updates.status !== undefined) sanitizedUpdates.status = updates.status;
-      if (updates.progress !== undefined) sanitizedUpdates.progress = updates.progress;
-      if (updates.priority !== undefined) sanitizedUpdates.priority = updates.priority;
-      if (updates.deadline !== undefined && updates.deadline !== null) sanitizedUpdates.deadline = updates.deadline;
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          sanitizedUpdates[key] = value;
+        }
+      });
       
       console.log('Sanitized updates to send:', sanitizedUpdates);
+      console.log('Sanitized keys:', Object.keys(sanitizedUpdates));
       
-      await updateMission(id, sanitizedUpdates);
+      const result = await updateMission(id, sanitizedUpdates);
+      console.log('Update result:', result);
+      
       fetchMissions();
     } catch (err: any) {
       console.error('Update mission error:', err);
