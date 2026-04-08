@@ -969,6 +969,13 @@ export default function Missionboard() {
                 <h2 className="text-xl font-bold text-white">Mission Details</h2>
                 <div className="flex items-center gap-2">
                   <button 
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="p-2 text-[#00F5FF] hover:text-[#00F5FF]/80 hover:bg-[#00F5FF]/10 rounded-lg transition-colors"
+                    title="Edit mission"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button 
                     onClick={handleDeleteMission}
                     className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
                     title="Delete mission"
