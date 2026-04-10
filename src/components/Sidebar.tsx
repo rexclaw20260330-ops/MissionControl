@@ -13,11 +13,13 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Lightbulb,
 } from "lucide-react";
 import { RestartButton } from "@/components/RestartButton";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Ideas", href: "/ideas", icon: Lightbulb },
   { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "Missions", href: "/missions", icon: Target },
   { name: "Team", href: "/team", icon: Users },
