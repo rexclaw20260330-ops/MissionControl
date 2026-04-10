@@ -1,95 +1,43 @@
 'use client';
 
-import { Calendar } from "lucide-react";
+import { Calendar, Clock, RefreshCw } from "lucide-react";
+import { useState, useEffect } from 'react';
 
-type AgentId = "rex" | "mosa" | "bronto" | "tricera" | "pteroda";
-
-interface Agent {
-  id: AgentId;
-  name: string;
-  emoji: string;
-  gradient: string;
-  color: string;
-}
-
-interface ScheduleEvent {
+interface CronEvent {
   id: string;
   title: string;
-  agentId: AgentId;
-  day: number; // 0-6 (Mon-Sun)
+  agentId: string;
+  day: number; // 0-6 (Mon-Sun), -1 for every day
   startHour: number;
   endHour: number;
-  type: "focus" | "meeting" | "planning" | "break";
+  type: string;
+  intervalMinutes?: number;
+  description?: string;
 }
-
-const agents: Agent[] = [
-  { id: "rex", name: "Rex", emoji: "🦖", gradient: "from-[#0066ff] to-[#00ffff]", color: "#00F5FF" },
-  { id: "tricera", name: "Tricera", emoji: "🦕", gradient: "from-purple-500 to-pink-500", color: "#A855F7" },
-  { id: "pteroda", name: "Pteroda", emoji: "🦅", gradient: "from-amber-500 to-orange-500", color: "#F59E0B" },
-  { id: "bronto", name: "Bronto", emoji: "🦴", gradient: "from-emerald-500 to-teal-500", color: "#10B981" },
-  { id: "mosa", name: "Mosa", emoji: "🧩", gradient: "from-rose-500 to-red-500", color: "#F43F5E" },
-];
 
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-// Hardcoded schedules (written in code, no database needed)
-const hardcodedSchedules: ScheduleEvent[] = [
-  // Rex - Monday
-  { id: "rex-mon-focus", title: "Deep Work", agentId: "rex", day: 0, startHour: 9, endHour: 12, type: "focus" },
-  { id: "rex-mon-plan", title: "Sprint Planning", agentId: "rex", day: 0, startHour: 14, endHour: 15, type: "planning" },
-  
-  // Rex - Tuesday
-  { id: "rex-tue-focus", title: "Code Review", agentId: "rex", day: 1, startHour: 10, endHour: 12, type: "focus" },
-  { id: "rex-tue-meet", title: "Team Sync", agentId: "rex", day: 1, startHour: 14, endHour: 15, type: "meeting" },
-  
-  // Rex - Wednesday
-  { id: "rex-wed-focus", title: "Architecture", agentId: "rex", day: 2, startHour: 9, endHour: 11, type: "focus" },
-  
-  // Rex - Thursday
-  { id: "rex-thu-focus", title: "Feature Dev", agentId: "rex", day: 3, startHour: 9, endHour: 13, type: "focus" },
-  
-  // Rex - Friday
-  { id: "rex-fri-wrap", title: "Week Wrap", agentId: "rex", day: 4, startHour: 15, endHour: 17, type: "planning" },
-  
-  // Mosa - Daily Standups
-  { id: "mosa-mon-standup", title: "Standup", agentId: "mosa", day: 0, startHour: 9, endHour: 9.5, type: "meeting" },
-  { id: "mosa-tue-standup", title: "Standup", agentId: "mosa", day: 1, startHour: 9, endHour: 9.5, type: "meeting" },
-  { id: "mosa-wed-standup", title: "Standup", agentId: "mosa", day: 2, startHour: 9, endHour: 9.5, type: "meeting" },
-  { id: "mosa-thu-standup", title: "Standup", agentId: "mosa", day: 3, startHour: 9, endHour: 9.5, type: "meeting" },
-  { id: "mosa-fri-standup", title: "Standup", agentId: "mosa", day: 4, startHour: 9, endHour: 9.5, type: "meeting" },
-  
-  // Mosa - Coding blocks
-  { id: "mosa-tue-code", title: "Feature Coding", agentId: "mosa", day: 1, startHour: 10, endHour: 18, type: "focus" },
-  { id: "mosa-wed-code", title: "Feature Coding", agentId: "mosa", day: 2, startHour: 10, endHour: 18, type: "focus" },
-  { id: "mosa-thu-code", title: "Feature Coding", agentId: "mosa", day: 3, startHour: 10, endHour: 18, type: "focus" },
-  
-  // Tricera - Design sessions
-  { id: "tricera-tue-design", title: "UI Design", agentId: "tricera", day: 1, startHour: 10, endHour: 14, type: "focus" },
-  { id: "tricera-thu-design", title: "UI Design", agentId: "tricera", day: 3, startHour: 10, endHour: 14, type: "focus" },
-  
-  // Pteroda - Daily Crypto Analysis
-  { id: "pteroda-daily-crypto", title: "Crypto Analysis", agentId: "pteroda", day: 0, startHour: 9, endHour: 10, type: "focus" },
-  { id: "pteroda-daily-crypto2", title: "Crypto Analysis", agentId: "pteroda", day: 1, startHour: 9, endHour: 10, type: "focus" },
-  { id: "pteroda-daily-crypto3", title: "Crypto Analysis", agentId: "pteroda", day: 2, startHour: 9, endHour: 10, type: "focus" },
-  { id: "pteroda-daily-crypto4", title: "Crypto Analysis", agentId: "pteroda", day: 3, startHour: 9, endHour: 10, type: "focus" },
-  { id: "pteroda-daily-crypto5", title: "Crypto Analysis", agentId: "pteroda", day: 4, startHour: 9, endHour: 10, type: "focus" },
-  
-  // Bronto - QA sessions
-  { id: "bronto-tue-qa", title: "Code QA", agentId: "bronto", day: 1, startHour: 14, endHour: 17, type: "focus" },
-  { id: "bronto-thu-qa", title: "Code QA", agentId: "bronto", day: 3, startHour: 14, endHour: 17, type: "focus" },
-  { id: "bronto-fri-qa", title: "Weekly Review", agentId: "bronto", day: 4, startHour: 10, endHour: 12, type: "planning" },
-];
+const agentColors: Record<string, { gradient: string; emoji: string }> = {
+  system: { gradient: "from-gray-500 to-gray-400", emoji: "⚙️" },
+  rex: { gradient: "from-[#0066ff] to-[#00ffff]", emoji: "🦖" },
+  pteroda: { gradient: "from-amber-500 to-orange-500", emoji: "🦅" },
+  mosa: { gradient: "from-rose-500 to-red-500", emoji: "🧩" },
+  bronto: { gradient: "from-emerald-500 to-teal-500", emoji: "🦴" },
+  tricera: { gradient: "from-purple-500 to-pink-500", emoji: "🦕" },
+};
 
 const getEventTypeStyle = (type: string) => {
   switch (type) {
-    case "focus":
+    case "task":
       return "bg-gradient-to-r from-blue-500/80 to-cyan-500/80 border-blue-400/50";
-    case "meeting":
+    case "analysis":
+      return "bg-gradient-to-r from-amber-500/80 to-orange-500/80 border-amber-400/50";
+    case "maintenance":
+      return "bg-gradient-to-r from-gray-500/80 to-gray-400/80 border-gray-400/50";
+    case "trading":
+      return "bg-gradient-to-r from-green-500/80 to-emerald-500/80 border-green-400/50";
+    case "interval":
       return "bg-gradient-to-r from-purple-500/80 to-pink-500/80 border-purple-400/50";
-    case "planning":
-      return "bg-gradient-to-r from-emerald-500/80 to-teal-500/80 border-emerald-400/50";
-    case "break":
-      return "bg-gradient-to-r from-gray-500/60 to-gray-400/60 border-gray-400/50";
     default:
       return "bg-gradient-to-r from-blue-500/80 to-cyan-500/80 border-blue-400/50";
   }
@@ -97,16 +45,53 @@ const getEventTypeStyle = (type: string) => {
 
 const getEventTypeLabel = (type: string) => {
   switch (type) {
-    case "focus": return "Focus";
-    case "meeting": return "Meeting";
-    case "planning": return "Planning";
-    case "break": return "Break";
-    default: return "Focus";
+    case "task": return "Task";
+    case "analysis": return "Analysis";
+    case "maintenance": return "Maint";
+    case "trading": return "Trading";
+    case "interval": return "Interval";
+    default: return "Task";
   }
 };
 
 export default function DinoCalendar() {
+  const [events, setEvents] = useState<CronEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const today = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+
+  useEffect(() => {
+    fetchCronEvents();
+  }, []);
+
+  const fetchCronEvents = async () => {
+    try {
+      const response = await fetch('/api/cron');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      setEvents(data.events || []);
+    } catch (error) {
+      console.error('Error fetching cron events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Group events by day
+  const eventsByDay = (dayIndex: number) => {
+    return events.filter(e => e.day === dayIndex || e.day === -1);
+  };
+
+  // Get unique agents from events
+  const getAgentsFromEvents = () => {
+    const agentIds = [...new Set(events.map(e => e.agentId))];
+    return agentIds.map(id => ({
+      id,
+      name: id.charAt(0).toUpperCase() + id.slice(1),
+      ...agentColors[id] || agentColors.system
+    }));
+  };
+
+  const agents = getAgentsFromEvents();
 
   return (
     <div className="min-h-screen bg-[#0D1117] text-white p-6">
@@ -118,8 +103,36 @@ export default function DinoCalendar() {
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight">Dino Calendar</h1>
-            <p className="text-[#8a8a95]">Agent schedules &amp; cron jobs (hardcoded)</p>
+            <p className="text-[#8a8a95]">Real cron jobs & scheduled tasks</p>
           </div>
+          <button 
+            onClick={fetchCronEvents}
+            className="ml-auto p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+            disabled={loading}
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Interval Jobs Summary */}
+      <div className="mb-6">
+        <h2 className="text-sm font-semibold text-[#8a8a95] mb-3 flex items-center gap-2">
+          <Clock className="w-4 h-4" />
+          Interval Jobs
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {events
+            .filter(e => e.intervalMinutes)
+            .map(e => (
+              <div 
+                key={e.id}
+                className={`px-3 py-1.5 rounded-lg text-sm border ${getEventTypeStyle(e.type)}`}
+              >
+                <span className="font-medium">{e.title}</span>
+                <span className="text-white/60 ml-2">every {e.intervalMinutes}m</span>
+              </div>
+            ))}
         </div>
       </div>
 
@@ -127,7 +140,9 @@ export default function DinoCalendar() {
       <div className="bg-[#161B22] border border-white/10 rounded-2xl overflow-hidden">
         {/* Header Row */}
         <div className="grid grid-cols-8 border-b border-white/10">
-          <div className="p-4 border-r border-white/10" />
+          <div className="p-4 border-r border-white/10 text-sm text-[#8a8a95]">
+            Agent
+          </div>
           {weekDays.map((day, i) => (
             <div
               key={day}
@@ -140,66 +155,80 @@ export default function DinoCalendar() {
           ))}
         </div>
 
-        {/* Agent Rows */}
-        {agents.map((agent) => (
-          <div key={agent.id} className="grid grid-cols-8 border-b border-white/10 last:border-b-0">
-            {/* Agent Label */}
-            <div className="p-4 border-r border-white/10 flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${agent.gradient} flex items-center justify-center text-lg`}>
-                {agent.emoji}
-              </div>
-              <span className="font-medium text-sm">{agent.name}</span>
-            </div>
-
-            {/* Days */}
-            {weekDays.map((_, dayIndex) => {
-              const dayEvents = hardcodedSchedules.filter(
-                (e) => e.agentId === agent.id && e.day === dayIndex
-              );
-
-              return (
-                <div
-                  key={dayIndex}
-                  className={`p-2 border-r border-white/10 last:border-r-0 min-h-[100px] ${
-                    dayIndex === today ? "bg-[#0066ff]/5" : ""
-                  }`}
-                >
-                  {dayEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className={`mb-2 p-2 rounded-lg border text-xs ${getEventTypeStyle(event.type)}`}
-                    >
-                      <p className="font-medium text-white truncate">{event.title}</p>
-                      <p className="text-white/70">
-                        {Math.floor(event.startHour)}:{(event.startHour % 1) * 60 === 0 ? '00' : '30'} - {Math.floor(event.endHour)}:{(event.endHour % 1) * 60 === 0 ? '00' : '30'}
-                      </p>
-                      <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-black/30 text-white/80 text-[10px]">
-                        {getEventTypeLabel(event.type)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
+        {/* Events by Agent */}
+        {loading ? (
+          <div className="p-12 text-center text-[#8a8a95]">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+            Loading cron jobs...
           </div>
-        ))}
+        ) : (
+          agents.map((agent) => (
+            <div key={agent.id} className="grid grid-cols-8 border-b border-white/10 last:border-b-0">
+              {/* Agent Label */}
+              <div className="p-4 border-r border-white/10 flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${agent.gradient} flex items-center justify-center text-lg`}>
+                  {agent.emoji}
+                </div>
+                <span className="font-medium text-sm">{agent.name}</span>
+              </div>
+
+              {/* Days */}
+              {weekDays.map((_, dayIndex) => {
+                const dayEvents = events.filter(
+                  e => (e.day === dayIndex || e.day === -1) && e.agentId === agent.id && !e.intervalMinutes
+                );
+
+                return (
+                  <div
+                    key={dayIndex}
+                    className={`p-2 border-r border-white/10 last:border-r-0 min-h-[100px] ${
+                      dayIndex === today ? "bg-[#0066ff]/5" : ""
+                    }`}
+                  >
+                    {dayEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className={`mb-2 p-2 rounded-lg border text-xs ${getEventTypeStyle(event.type)}`}
+                        title={event.description}
+                      >
+                        <p className="font-medium text-white truncate">{event.title}</p>
+                        <p className="text-white/70">
+                          {String(event.startHour).padStart(2, '0')}:{String((event.startHour % 1) * 60).padStart(2, '0')}
+                        </p>
+                        <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-black/30 text-white/80 text-[10px]">
+                          {getEventTypeLabel(event.type)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        )}
       </div>
 
       {/* Legend */}
-      <div className="mt-6 flex items-center gap-6">
-        <span className="text-[#8a8a95] text-sm">Event Types:</span>
-        <div className="flex items-center gap-4">
-          {[
-            { type: "focus", label: "Focus", color: "from-blue-500 to-cyan-500" },
-            { type: "meeting", label: "Meeting", color: "from-purple-500 to-pink-500" },
-            { type: "planning", label: "Planning", color: "from-emerald-500 to-teal-500" },
-            { type: "break", label: "Break", color: "from-gray-500 to-gray-400" },
-          ].map(({ type, label, color }) => (
-            <div key={type} className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded bg-gradient-to-r ${color}`} />
-              <span className="text-sm text-[#8a8a95]">{label}</span>
-            </div>
-          ))}
+      <div className="mt-6 flex flex-wrap gap-4 text-sm text-[#8a8a95]">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded bg-gradient-to-r from-blue-500 to-cyan-500" />
+          <span>Task</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded bg-gradient-to-r from-amber-500 to-orange-500" />
+          <span>Analysis</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded bg-gradient-to-r from-green-500 to-emerald-500" />
+          <span>Trading</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded bg-gradient-to-r from-gray-500 to-gray-400" />
+          <span>Maintenance</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded bg-gradient-to-r from-purple-500 to-pink-500" />
+          <span>Interval</span>
         </div>
       </div>
     </div>
