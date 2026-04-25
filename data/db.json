@@ -8,7 +8,15 @@
   "projects": [
     { "id": 1, "name": "Mission Control", "status": "active", "progress": 75 },
     { "id": 2, "name": "Tricera Integration", "status": "on_hold", "progress": 30 },
-    { "id": 3, "name": "OpenClaw Automation", "status": "planning", "progress": 10 }
+    { "id": 3, "name": "OpenClaw Automation", "status": "planning", "progress": 10 },
+    { "id": 4, "name": "1. 新手安心入手加密貨幣", "status": "completed", "progress": 100 },
+    { "id": 5, "name": "2. 瘋傳音樂生產器", "status": "completed", "progress": 100 },
+    { "id": 6, "name": "3. 作曲機", "status": "completed", "progress": 100 },
+    { "id": 7, "name": "4. 學習上癮機（簡化版）", "status": "completed", "progress": 100 },
+    { "id": 8, "name": "5. 只找免費論文的網站", "status": "completed", "progress": 100 },
+    { "id": 9, "name": "6. AI Debator（語音對話）", "status": "completed", "progress": 100 },
+    { "id": 10, "name": "7. 健身飲食整合軟體", "status": "completed", "progress": 100 },
+    { "id": 11, "name": "8. 身體酸痛拉伸指南", "status": "completed", "progress": 100 }
   ],
   "stats": {
     "tasksCompleted": 12,
@@ -21,5 +29,5 @@
     { "id": 2, "action": "Updated Office page design", "timestamp": "2026-04-04T18:00:00Z", "type": "update" },
     { "id": 3, "action": "Added energy system for dinos", "timestamp": "2026-04-04T17:30:00Z", "type": "feature" }
   ],
-  "lastUpdated": "2026-04-04T19:31:00Z"
+  "lastUpdated": "2026-04-25T19:10:00Z"
 }
